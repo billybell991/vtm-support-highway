@@ -73,11 +73,20 @@
 <body>
 
 <h1>⇄ VTM Support Highway</h1>
-<p class="subtitle">Chrome Extension for Jira ↔ Zendesk Ticket Cloning — v1.0 Install Guide</p>
+<p class="subtitle">Browser Extension for Jira ↔ Zendesk Ticket Cloning — v1.0 Install Guide</p>
+
+<h2>Supported Browsers</h2>
+<table>
+  <tr><th>Browser</th><th>Supported</th><th>Notes</th></tr>
+  <tr><td><strong>Google Chrome</strong></td><td>✅ Yes</td><td>Primary target. Fully tested.</td></tr>
+  <tr><td><strong>Microsoft Edge</strong></td><td>✅ Yes</td><td>Same Chromium engine. Works identically.</td></tr>
+  <tr><td><strong>Safari</strong></td><td>❌ No</td><td>Safari requires Xcode packaging — not supported for internal distribution.</td></tr>
+  <tr><td><strong>Firefox</strong></td><td>❌ No</td><td>Uses a different extension format (WebExtensions manifest v2).</td></tr>
+</table>
 
 <h2>Prerequisites</h2>
 <ul class="prereq-list">
-  <li><span class="check">✓</span> Google Chrome (or Edge Chromium) browser</li>
+  <li><span class="check">✓</span> Google Chrome or Microsoft Edge browser</li>
   <li><span class="check">✓</span> Active session logged into <strong>Jira</strong> at <code>http://atlassian.versaterm.com:8080</code></li>
   <li><span class="check">✓</span> Active session logged into <strong>Zendesk</strong> at <code>https://versatermhelp.zendesk.com</code></li>
   <li><span class="check">✓</span> The extension folder (this ZIP, extracted)</li>
@@ -97,31 +106,38 @@
   <p><strong>Mac:</strong> Double-click the ZIP → move the folder to <code>~/Tools/vtm_support_highway</code></p>
   <div class="warning">
     <strong>Don't delete this folder!</strong>
-    Chrome loads the extension directly from this folder. If you move or delete it, the extension will break.
+    Your browser loads the extension directly from this folder. If you move or delete it, the extension will break.
   </div>
 </div>
 
 <div class="step">
-  <div class="step-header"><span class="step-number">2</span> Open Chrome Extensions</div>
-  <p>Type this in your Chrome address bar and press Enter:</p>
-  <div class="code-block">chrome://extensions</div>
+  <div class="step-header"><span class="step-number">2</span> Open the Extensions Page</div>
+  <p>Type one of these in your browser's address bar and press Enter:</p>
+  <table>
+    <tr><th>Browser</th><th>Address</th></tr>
+    <tr><td>Chrome</td><td><code>chrome://extensions</code></td></tr>
+    <tr><td>Edge</td><td><code>edge://extensions</code></td></tr>
+  </table>
 </div>
 
 <div class="step">
   <div class="step-header"><span class="step-number">3</span> Enable Developer Mode</div>
-  <p>Find the <strong>"Developer mode"</strong> toggle in the top-right corner of the page. Turn it <strong>ON</strong>.</p>
+  <p><strong>Chrome:</strong> Find the <strong>"Developer mode"</strong> toggle in the <strong>top-right</strong> corner. Turn it <strong>ON</strong>.</p>
+  <p><strong>Edge:</strong> Find the <strong>"Developer mode"</strong> toggle in the <strong>bottom-left</strong> sidebar. Turn it <strong>ON</strong>.</p>
+  <p style="margin-top:4px; font-size:12px; color:#6c757d;">Edge may also prompt you to "Allow extensions from other stores" — click <strong>Allow</strong> if asked.</p>
 </div>
 
 <div class="step">
   <div class="step-header"><span class="step-number">4</span> Load the Extension</div>
-  <p>Click <strong>"Load unpacked"</strong> (top-left area).</p>
+  <p>Click <strong>"Load unpacked"</strong> (top area of the page).</p>
   <p>Browse to the folder you extracted in Step 1 (the one containing <code>manifest.json</code>).</p>
   <p>Click <strong>"Select Folder"</strong> (Windows) or <strong>"Open"</strong> (Mac).</p>
 </div>
 
 <div class="step">
   <div class="step-header"><span class="step-number">5</span> Pin the Extension</div>
-  <p>Click the <strong>puzzle piece icon</strong> (🧩) in Chrome's toolbar → find "VTM Support Highway" → click the <strong>pin icon</strong> to keep it visible.</p>
+  <p><strong>Chrome:</strong> Click the <strong>puzzle piece icon</strong> (🧩) in the toolbar → find "VTM Support Highway" → click the <strong>pin icon</strong>.</p>
+  <p><strong>Edge:</strong> Click the <strong>puzzle piece icon</strong> (🧩) in the toolbar → find "VTM Support Highway" → click the <strong>eye icon</strong> to show in toolbar.</p>
 </div>
 
 <div class="success">
@@ -132,7 +148,7 @@
 
 <h3>Option A: From the toolbar icon</h3>
 <ol>
-  <li>Navigate to a <strong>Jira SUP ticket</strong> or a <strong>Zendesk ticket</strong> in Chrome</li>
+  <li>Navigate to a <strong>Jira SUP ticket</strong> or a <strong>Zendesk ticket</strong></li>
   <li>Click the <strong>VTM Support Highway</strong> icon in the toolbar</li>
   <li>The popup auto-detects the ticket and shows a preview with editable fields</li>
   <li>Check/uncheck options (copy comments, copy attachments, cross-link)</li>
@@ -184,12 +200,13 @@
   <tr><td>Attachment copy fails</td><td>Check you're logged into both systems. Some very large files may time out.</td></tr>
   <tr><td>Extension disappeared</td><td>You may have deleted the source folder. Re-extract and re-load.</td></tr>
   <tr><td>"This extension is not from the Chrome Web Store"</td><td>Normal for developer-loaded extensions. Click "Keep" if prompted.</td></tr>
+  <tr><td>Edge: "Allow extensions from other stores"</td><td>Click "Allow" — this is required for non-Edge-store extensions.</td></tr>
 </table>
 
 <h2>Updating</h2>
 <ol>
   <li>Extract the new ZIP, replacing the old folder contents</li>
-  <li>Go to <code>chrome://extensions</code></li>
+  <li>Go to <code>chrome://extensions</code> (Chrome) or <code>edge://extensions</code> (Edge)</li>
   <li>Click the <strong>refresh icon</strong> (↻) on the VTM Support Highway card</li>
 </ol>
 
