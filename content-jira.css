@@ -1,0 +1,81 @@
+/* content-jira.css — Styles for the injected Clone button and toast */
+
+.vtm-clone-group {
+  margin-left: 8px !important;
+}
+
+.vtm-clone-btn {
+  background: #0052cc !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 3px !important;
+  padding: 4px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  transition: background 0.15s !important;
+}
+.vtm-clone-btn:hover {
+  background: #0065ff !important;
+  color: #fff !important;
+  text-decoration: none !important;
+}
+.vtm-clone-btn.vtm-busy {
+  opacity: 0.7 !important;
+  pointer-events: none !important;
+}
+
+.vtm-icon {
+  font-size: 15px;
+}
+
+/* Spinner */
+.vtm-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: vtm-spin 0.6s linear infinite;
+}
+@keyframes vtm-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast notification */
+.vtm-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  max-width: 420px;
+  padding: 12px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  transition: opacity 0.4s;
+}
+.vtm-toast a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.vtm-toast-info {
+  background: #0052cc;
+  color: #fff;
+}
+.vtm-toast-done {
+  background: #1b5e20;
+  color: #fff;
+}
+.vtm-toast-error {
+  background: #c62828;
+  color: #fff;
+}

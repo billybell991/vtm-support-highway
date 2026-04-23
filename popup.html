@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VTM Support Highway</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-left">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      <div>
+        <h1>VTM Support Highway</h1>
+        <span class="subtitle">Create &amp; link tickets across systems</span>
+      </div>
+    </div>
+    <button id="btn-settings" class="icon-btn" title="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+  </header>
+
+  <!-- ===== SETTINGS PANEL (hidden by default) ===== -->
+  <div id="settings-panel" class="settings-panel">
+    <h2>Configuration</h2>
+    <div class="settings-grid">
+      <fieldset>
+        <legend>Jira Server</legend>
+        <label>Base URL
+          <div class="locked-field">
+            <input type="text" id="cfg-jira-url" value="http://atlassian.versaterm.com:8080" readonly />
+            <button type="button" class="btn-unlock" onclick="this.previousElementSibling.removeAttribute('readonly');this.style.display='none'" title="Modify">&#9998;</button>
+          </div>
+        </label>
+        <label>Username <span style="font-weight:400;color:#868e96">(optional if already logged in)</span> <input type="text" id="cfg-jira-user" placeholder="jira.username" /></label>
+        <label>Password / Token <span style="font-weight:400;color:#868e96">(optional if already logged in)</span> <input type="password" id="cfg-jira-pass" /></label>
+      </fieldset>
+      <fieldset>
+        <legend>Zendesk</legend>
+        <label>Base URL
+          <div class="locked-field">
+            <input type="text" id="cfg-zd-url" value="https://versatermhelp.zendesk.com" readonly />
+            <button type="button" class="btn-unlock" onclick="this.previousElementSibling.removeAttribute('readonly');this.style.display='none'" title="Modify">&#9998;</button>
+          </div>
+        </label>
+        <label>Email <span style="font-weight:400;color:#868e96">(optional if logged in)</span> <input type="email" id="cfg-zd-email" placeholder="you@versaterm.com" /></label>
+        <label>API Token <span style="font-weight:400;color:#868e96">(optional if logged in)</span> <input type="password" id="cfg-zd-token" /></label>
+        <label>Brand ID <span style="font-weight:400;color:#868e96">(optional — ensures ticket visibility)</span> <input type="text" id="cfg-zd-brand" placeholder="e.g. 360000123456" /></label>
+        <label>Default Assignee Email <span style="font-weight:400;color:#868e96">(optional)</span> <input type="email" id="cfg-zd-assignee" placeholder="assignee@versaterm.com" /></label>
+      </fieldset>
+      <fieldset>
+        <legend>Aha! <span class="phase2-tag">Phase 2</span></legend>
+        <label>Base URL <input type="text" id="cfg-aha-url" placeholder="https://versaterm.aha.io" disabled /></label>
+        <label>API Key <input type="password" id="cfg-aha-key" disabled /></label>
+      </fieldset>
+    </div>
+    <div class="settings-actions">
+      <button id="btn-save-settings" class="btn primary">Save</button>
+      <button id="btn-export-settings" class="btn" title="Export settings to share with team">Export Settings</button>
+      <button id="btn-import-settings" class="btn" title="Import shared settings file">Import Settings</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" />
+      <button id="btn-close-settings" class="btn">Close</button>
+    </div>
+    <div id="settings-status" class="status" style="display:none"></div>
+  </div>
+
+  <!-- ===== MAIN BODY ===== -->
+  <div class="body">
+    <!-- Detection badge -->
+    <div id="detect-row" class="detect-row">
+      <span id="source-badge" class="badge">—</span>
+      <span id="ticket-title" class="ticket-title"></span>
+    </div>
+    <div id="detect-hint" class="detect-hint">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span id="detect-hint-text">Detecting ticket from current tab…</span>
+    </div>
+
+    <!-- Manual entry (shown when no ticket detected) -->
+    <div id="manual-entry" class="manual-entry" style="display:none">
+      <label>Source
+        <select id="manual-source">
+          <option value="zendesk">Zendesk</option>
+          <option value="jira">Jira</option>
+          <option value="aha">Aha!</option>
+        </select>
+      </label>
+      <label>Ticket # / Key
+        <input type="text" id="manual-ticket" placeholder="e.g. SUP-12345 or 98765" />
+      </label>
+      <button id="btn-fetch-manual" class="btn primary">Fetch</button>
+    </div>
+
+    <!-- Status bar -->
+    <div id="status" class="status" style="display:none"></div>
+
+    <!-- ===== PREVIEW / EDIT FORM ===== -->
+    <div id="preview-section" style="display:none">
+      <!-- Existing clone alert (shown by fetchAndPreview if clone found) -->
+      <div id="clone-alert" class="clone-alert" style="display:none">
+        <div class="clone-alert-text">
+          <strong>Existing clone found:</strong>
+          <a id="clone-alert-link" href="#" target="_blank"></a>
+        </div>
+        <button id="btn-resync-existing" class="btn" title="Resync comments & attachments to existing clone">⟳ Resync</button>
+      </div>
+      <h2 id="preview-heading">Preview: New Jira Ticket</h2>
+
+      <!-- Common fields -->
+      <div class="form-grid">
+        <label class="full-width">Summary
+          <input type="text" id="fld-summary" />
+        </label>
+      </div>
+
+      <!-- Jira-target fields (shown when creating TO Jira) -->
+      <div id="jira-target-fields" class="form-grid" style="display:none">
+        <label>Project Key
+          <select id="fld-project">
+            <option value="">— select —</option>
+            <option value="SUP">SUP (Support)</option>
+            <option value="CRMS">CRMS (Canadian RMS)</option>
+          </select>
+        </label>
+        <label>Issue Type
+          <select id="fld-issuetype">
+            <option value="Ticket" selected>Ticket</option>
+          </select>
+        </label>
+        <label>Priority
+          <select id="fld-priority-jira">
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </label>
+        <label>Severity
+          <select id="fld-severity">
+            <option value="">— none —</option>
+            <option value="Normal" selected>Normal</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </label>
+        <label class="full-width">Original Submittal
+          <textarea id="fld-original-submittal" rows="2"></textarea>
+        </label>
+        <label class="full-width">Description <span style="color:#6c757d;font-weight:normal">(brief Jira summary — optional)</span>
+          <textarea id="fld-description" rows="1"></textarea>
+        </label>
+        <label>Client
+          <input type="text" id="fld-client" placeholder="e.g. Ottawa_Police" />
+        </label>
+        <label>Product
+          <select id="fld-product">
+            <option value="">— none —</option>
+            <option value="CAN RMS" selected>CAN RMS</option>
+            <option value="US RMS">US RMS</option>
+            <option value="CDN CAD">CDN CAD</option>
+            <option value="US CAD">US CAD</option>
+          </select>
+        </label>
+        <label>Contact
+          <input type="text" id="fld-contact" placeholder="Name <email>" />
+        </label>
+        <label>Reference Number
+          <input type="text" id="fld-refnumber" placeholder="e.g. INC0154508" />
+        </label>
+        <label>Components
+          <select id="fld-components"><option value="">— loading —</option></select>
+        </label>
+      </div>
+
+      <!-- Zendesk-target fields (shown when creating TO Zendesk) -->
+      <div id="zd-target-fields" class="form-grid" style="display:none">
+        <label class="full-width">Description
+          <textarea id="fld-zd-description" rows="2"></textarea>
+        </label>
+        <label>Type
+          <select id="fld-zd-type">
+            <option value="problem">Problem</option>
+            <option value="incident">Incident</option>
+            <option value="question">Question</option>
+            <option value="task">Task</option>
+          </select>
+        </label>
+        <label>Priority
+          <select id="fld-priority-zd">
+            <option value="low">Low</option>
+            <option value="normal" selected>Normal</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </label>
+        <label class="full-width">Tags
+          <input type="text" id="fld-zd-tags" placeholder="comma-separated" />
+        </label>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-row" id="action-row-placeholder" style="display:none"></div>
+    </div>
+
+    <!-- ===== RESULT ===== -->
+    <div id="result-section" style="display:none">
+      <div class="result-card success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#198754" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <div>
+          <strong id="result-title">Ticket Created</strong>
+          <p id="result-detail"></p>
+          <a id="result-link" href="#" target="_blank" rel="noopener">Open ticket →</a>
+        </div>
+      </div>
+      <div id="crosslink-result" style="display:none" class="result-card info">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        <div>
+          <strong>Cross-link added</strong>
+          <p id="crosslink-detail"></p>
+        </div>
+      </div>
+      <button id="btn-resync" class="btn" style="display:none" title="Copy any new comments/attachments from source to target">⟳ Resync</button>
+      <button id="btn-another" class="btn">Create Another</button>
+    </div>
+  </div>
+
+  <!-- Pinned footer — OUTSIDE .body so it doesn't scroll -->
+  <div id="preview-footer" class="preview-footer" style="display:none">
+    <div class="crosslink-row">
+      <label><input type="checkbox" id="chk-crosslink" checked /> Add internal comment with link back to source ticket</label>
+    </div>
+    <div class="crosslink-row">
+      <label><input type="checkbox" id="chk-copy-comments" checked /> Copy all comments</label>
+    </div>
+    <div class="crosslink-row">
+      <label><input type="checkbox" id="chk-copy-attachments" checked /> Copy all attachments &amp; screenshots</label>
+    </div>
+    <div class="action-row">
+      <button id="btn-create-jira" class="btn primary">Create Jira Ticket</button>
+      <button id="btn-create-zendesk" class="btn primary">Create Zendesk Ticket</button>
+      <button id="btn-create-aha" class="btn primary" disabled title="Aha integration coming in Phase 2">Create Aha Idea <span class="phase2-tag">Phase 2</span></button>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script src="settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
