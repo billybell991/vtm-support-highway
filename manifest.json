@@ -3,6 +3,7 @@
   "name": "VTM Support Highway",
   "version": "1.4.2",
   "description": "Create and link tickets across Zendesk, Jira Cloud, and Aha from any support app.",
+  "homepage_url": "https://github.com/billybell991/vtm-support-highway",
   "permissions": ["storage", "activeTab", "tabs", "cookies", "idle", "notifications"],
   "host_permissions": [
     "https://*.zendesk.com/*",
