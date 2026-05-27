@@ -2,6 +2,10 @@
 _stage-*/
 *.zip
 
+# accidental download/extract of our own zip
+vtm-support-highway (*)/
+vtm-support-highway (*).zip
+
 # editor / OS
 .vscode/
 .DS_Store
