@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Versaterm Engineering Hub — internal tools & onboarding</title>
+<title>Versaterm Support Hub &mdash; internal tools &amp; onboarding</title>
 <link rel="icon" href="/versaterm-logo.png" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" />
 <style>
@@ -119,16 +119,27 @@
 
   /* ---------- section header ---------- */
   .section-head {
-    display: flex; align-items: baseline; gap: var(--sp-3);
     margin-bottom: var(--sp-4);
   }
-  .section-head .kicker {
-    font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--vt-amber);
+  .section-head h2 {
+    font-size: 38px;
+    line-height: 1.15;
+    margin: 0 0 6px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
   }
-  .section-head h2 { margin: 0; }
+  .section-head .sub {
+    color: var(--ink-3);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .band.deep .section-head h2 { color: #fff; }
+  .band.deep .section-head .sub { color: rgba(252,217,179,0.85); }
 
-  /* ---------- featured (onboarding) card ---------- */
+  /* ---------- featured card (used by both onboarding + support tools) ---------- */
   .featured {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -138,10 +149,11 @@
     border: 1px solid var(--line);
     border-left: 4px solid var(--vt-amber);
     border-radius: var(--r-lg);
-    padding: var(--sp-5) var(--sp-5);
+    padding: var(--sp-5);
     box-shadow: var(--shadow-md);
     transition: transform 160ms ease, box-shadow 160ms ease;
   }
+  .featured + .featured { margin-top: var(--sp-4); }
   .featured:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
   .featured .body { min-width: 0; }
   .featured .badge {
@@ -153,15 +165,30 @@
     margin-bottom: var(--sp-2);
   }
   .featured .badge .material-symbols-outlined { font-size: 14px; }
-  .featured h2 { font-size: 28px; margin-bottom: 8px; }
+  .featured h2, .featured h3.title { font-size: 28px; margin: 0 0 8px; font-weight: 700; line-height: 1.2; color: var(--ink); }
+  .featured .sub { color: var(--ink-3); font-size: 13.5px; font-weight: 500; margin: 0 0 var(--sp-2); }
   .featured p { color: var(--ink-2); font-size: 16px; margin-bottom: var(--sp-3); }
+  .featured .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--sp-2); }
+  .featured .tag {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--vt-navy);
+    background: rgba(30,58,95,0.06);
+    padding: 3px 8px; border-radius: 999px;
+  }
   .featured ul.meta {
-    list-style: none; padding: 0; margin: 0 0 var(--sp-3);
+    list-style: none; padding: 0; margin: var(--sp-2) 0 0;
     display: flex; flex-wrap: wrap; gap: var(--sp-3);
     color: var(--ink-3); font-size: 13px;
   }
   .featured ul.meta li { display: flex; align-items: center; gap: 6px; }
   .featured ul.meta .material-symbols-outlined { font-size: 16px; color: var(--vt-navy); }
+
+  /* tool variant: navy stripe instead of amber to keep onboarding visually primary */
+  .featured.tool { border-left-color: var(--vt-navy); }
+  .featured.tool .badge {
+    color: var(--vt-navy);
+    background: rgba(30,58,95,0.08);
+  }
 
   .cta {
     display: inline-flex; align-items: center; gap: 8px;
@@ -179,28 +206,8 @@
   .cta:focus-visible { outline: 3px solid rgba(245,130,31,0.45); outline-offset: 3px; }
   .cta .material-symbols-outlined { font-size: 20px; }
 
-  /* ---------- support tools grid ---------- */
-  .grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-4);
-  }
-  .tool-card {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: var(--r-md);
-    padding: var(--sp-4) var(--sp-4) var(--sp-3);
-    box-shadow: var(--shadow-sm);
-    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-    display: flex; flex-direction: column;
-    min-height: 220px;
-  }
-  .tool-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-    border-color: rgba(30,58,95,0.30);
-  }
-  .tool-card .icon {
+  /* ---------- icon block used inside .featured ---------- */
+  .feat-icon {
     width: 44px; height: 44px;
     display: inline-flex; align-items: center; justify-content: center;
     background: rgba(30,58,95,0.08);
@@ -208,33 +215,7 @@
     border-radius: 10px;
     margin-bottom: var(--sp-3);
   }
-  .tool-card .icon .material-symbols-outlined { font-size: 24px; font-variation-settings: 'wght' 500; }
-  .tool-card h3 { font-size: 19px; margin: 0 0 6px; color: var(--ink); }
-  .tool-card .sub { color: var(--ink-3); font-size: 13px; margin-bottom: var(--sp-2); font-weight: 500; }
-  .tool-card p { color: var(--ink-2); font-size: 14.5px; margin-bottom: var(--sp-3); flex: 1; }
-  .tool-card .actions { display: flex; gap: var(--sp-3); align-items: center; }
-  .tool-card .open {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: var(--vt-navy);
-    font-weight: 600; font-size: 14px;
-    padding: 8px 14px;
-    border: 1px solid var(--line);
-    border-radius: var(--r-sm);
-    background: #fff;
-    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
-  }
-  .tool-card .open:hover {
-    background: var(--vt-navy); color: #fff; border-color: var(--vt-navy);
-    text-decoration: none;
-  }
-  .tool-card .open .material-symbols-outlined { font-size: 16px; }
-  .tool-card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--sp-2); }
-  .tool-card .tag {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
-    color: var(--vt-navy);
-    background: rgba(30,58,95,0.06);
-    padding: 3px 8px; border-radius: 999px;
-  }
+  .feat-icon .material-symbols-outlined { font-size: 24px; font-variation-settings: 'wght' 500; }
 
   /* ---------- info row ---------- */
   .info-row {
@@ -264,17 +245,17 @@
   @media (max-width: 760px) {
     h1 { font-size: 30px; }
     h2 { font-size: 22px; }
+    .section-head h2 { font-size: 28px; }
     .featured { grid-template-columns: 1fr; padding: var(--sp-4); }
-    .featured h2 { font-size: 24px; }
+    .featured h2, .featured h3.title { font-size: 22px; }
     .cta { width: 100%; justify-content: center; }
-    .grid-2 { grid-template-columns: 1fr; }
     .info-row { grid-template-columns: 1fr; }
     .topnav nav { display: none; }
     .band { padding: var(--sp-5) 0; }
   }
 
   /* ---------- accessibility ---------- */
-  a:focus-visible, .open:focus-visible {
+  a:focus-visible {
     outline: 3px solid rgba(30,58,95,0.35);
     outline-offset: 2px;
     border-radius: var(--r-sm);
@@ -288,7 +269,7 @@
     <div class="topnav">
       <span class="logo">
         <img src="/versaterm-logo.png" alt="Versaterm" />
-        <span>Engineering Hub</span>
+        <span>Support Hub</span>
       </span>
       <nav>
         <a href="#onboarding">Onboarding</a>
@@ -298,8 +279,7 @@
     </div>
 
     <div class="hero-content">
-      <span class="pill"><span class="material-symbols-outlined">workspaces</span> Internal &middot; Hackathon</span>
-      <h1>One stop for internal tools and onboarding.</h1>
+      <h1>Internal tools and onboarding, in one place.</h1>
       <p class="lede">A small hub for the things engineering and support keep reaching for &mdash; the new-hire course up top, the productivity extensions just below. Bookmark this page.</p>
     </div>
   </div>
@@ -308,20 +288,16 @@
 <section class="band" id="onboarding">
   <div class="wrap">
     <div class="section-head">
-      <span class="kicker">Onboarding</span>
-      <h2>Start here</h2>
+      <h2>Onboarding</h2>
+      <p class="sub">Start here</p>
     </div>
 
-    <a href="http://hack-a-thon-utility/onboarding/" class="featured" style="text-decoration:none; color:inherit;">
+    <a href="/onboarding/" class="featured" style="text-decoration:none; color:inherit;">
       <div class="body">
         <span class="badge"><span class="material-symbols-outlined">school</span> New to Versaterm? Start here</span>
-        <h2>MRE Onboarding Course</h2>
+        <h3 class="title">MRE Onboarding Course</h3>
+        <div class="sub">Self-paced &middot; Interactive modules &middot; Recommended on day one</div>
         <p>An interactive guided tour through the Versaterm Mobile Records Environment (MRE) &mdash; covering the platform, the workflow, the tooling, and how everything fits together. Designed for new hires, useful as a refresher for everyone else.</p>
-        <ul class="meta">
-          <li><span class="material-symbols-outlined">timer</span> Self-paced</li>
-          <li><span class="material-symbols-outlined">menu_book</span> Interactive modules</li>
-          <li><span class="material-symbols-outlined">verified</span> Recommended on day one</li>
-        </ul>
       </div>
       <span class="cta">
         Begin onboarding
@@ -334,76 +310,77 @@
 <section class="band alt" id="support">
   <div class="wrap">
     <div class="section-head">
-      <span class="kicker">Support tools</span>
-      <h2>Day-to-day productivity</h2>
+      <h2>Support tools</h2>
+      <p class="sub">Day-to-day productivity</p>
     </div>
-    <p class="lede" style="margin-top:-8px; margin-bottom: var(--sp-4); max-width: 720px;">Chrome extensions and helpers built to take the grunt-work out of ticket triage and cross-tool linking.</p>
 
-    <div class="grid-2">
-
-      <a class="tool-card" href="/highway/" style="text-decoration:none; color:inherit;">
-        <span class="icon"><span class="material-symbols-outlined">hub</span></span>
-        <div class="tags">
-          <span class="tag">Chrome extension</span>
-          <span class="tag">Zendesk</span>
-          <span class="tag">Jira</span>
-        </div>
-        <h3>VTM Support Highway</h3>
+    <a class="featured tool" href="/highway/" style="text-decoration:none; color:inherit;">
+      <div class="body">
+        <span class="badge"><span class="material-symbols-outlined">hub</span> Chrome extension</span>
+        <h3 class="title">VTM Support Highway</h3>
         <div class="sub">Cross-link Zendesk &harr; Jira tickets in one click</div>
         <p>Adds <em>Clone to Support Defect</em> and <em>Clone to Tech Request</em> buttons inside Zendesk tickets, mirrors them to Jira Cloud or on-prem SUP, and keeps both sides linked so updates stay in sync.</p>
-        <div class="actions">
-          <span class="open">Install &amp; docs <span class="material-symbols-outlined">arrow_outward</span></span>
-        </div>
-      </a>
+        <ul class="meta">
+          <li><span class="material-symbols-outlined">tag</span> Zendesk</li>
+          <li><span class="material-symbols-outlined">extension</span> Jira Cloud + on-prem</li>
+          <li><span class="material-symbols-outlined">sync</span> Bidirectional links</li>
+        </ul>
+      </div>
+      <span class="cta">
+        Install &amp; docs
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </span>
+    </a>
 
-      <a class="tool-card" href="/sherlock/" style="text-decoration:none; color:inherit;">
-        <span class="icon"><span class="material-symbols-outlined">psychology</span></span>
-        <div class="tags">
-          <span class="tag">Chrome extension</span>
-          <span class="tag">LLM-powered</span>
-          <span class="tag">Zendesk</span>
-        </div>
-        <h3>SHERLOCK</h3>
+    <a class="featured tool" href="/sherlock/" style="text-decoration:none; color:inherit;">
+      <div class="body">
+        <span class="badge"><span class="material-symbols-outlined">psychology</span> AI-powered</span>
+        <h3 class="title">SHERLOCK</h3>
         <div class="sub">AI ticket analysis on-demand</div>
         <p>One click on a Zendesk ticket and SHERLOCK reaches into the local Postgres + LLM daemon to reproduce, diagnose, and draft a customer reply &mdash; with the full investigative report a button away.</p>
-        <div class="actions">
-          <span class="open">Install &amp; docs <span class="material-symbols-outlined">arrow_outward</span></span>
-        </div>
-      </a>
-
-    </div>
+        <ul class="meta">
+          <li><span class="material-symbols-outlined">tag</span> Zendesk</li>
+          <li><span class="material-symbols-outlined">database</span> Local Postgres + LLM</li>
+          <li><span class="material-symbols-outlined">description</span> Drafts replies</li>
+        </ul>
+      </div>
+      <span class="cta">
+        Install &amp; docs
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </span>
+    </a>
   </div>
 </section>
 
 <section class="band deep" id="about">
   <div class="wrap">
     <div class="section-head">
-      <span class="kicker" style="color:#fcd9b3">About</span>
-      <h2 style="color:#fff">Built during the Versaterm hackathon</h2>
+      <h2>About</h2>
+      <p class="sub">What this is</p>
     </div>
     <p class="lede" style="color:rgba(255,255,255,0.85); max-width: 720px;">
-      Three small projects that scratched real itches &mdash; an onboarding course, a ticket-linking extension, and an AI assistant for support. Hosted on a single internal box so everyone can find them in one place.
+      A central landing page for internal Versaterm tooling &mdash; the MRE onboarding course for new hires, plus the support extensions used day-to-day for ticket triage. One bookmark, three doors.
     </p>
 
     <div class="info-row">
       <div class="col">
         <h3>Where it lives</h3>
-        <p>Served from <code>hack-a-thon-utility</code> on the Versaterm internal network. Open URLs from any office machine.</p>
+        <p>Hosted on the Versaterm internal network. Open these URLs from any office or VPN-connected machine.</p>
       </div>
       <div class="col">
-        <h3>Who built it</h3>
-        <p>Versaterm engineering &amp; support. Each tool's install page links to its source.</p>
+        <h3>Who maintains it</h3>
+        <p>Versaterm engineering &amp; support. Each tool's install page links to its source and points at an owner.</p>
       </div>
       <div class="col">
         <h3>Found a bug?</h3>
-        <p>Ping the author listed on the individual install page, or file an issue against the project repo.</p>
+        <p>Ping the author listed on the individual install page, or file an issue against the tool's repo.</p>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
-  <p>Versaterm Engineering Hub &middot; internal use only &middot; <a href="#onboarding">back to top</a></p>
+  <p>Versaterm Support Hub &middot; internal use only &middot; <a href="#onboarding">back to top</a></p>
 </footer>
 
 </body>
