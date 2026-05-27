@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Versaterm Engineering Hub — internal tools & onboarding</title>
+<link rel="icon" href="/versaterm-logo.png" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" />
+<style>
+  :root {
+    --vt-navy: #1E3A5F;
+    --vt-navy-2: #16304F;
+    --vt-amber: #F5821F;
+    --vt-amber-2: #d96b0a;
+    --ink: #1a1f2b;
+    --ink-2: #4a5160;
+    --ink-3: #868e96;
+    --line: #e6e8ed;
+    --bg: #ffffff;
+    --bg-alt: #f8f9fa;
+    --bg-deep: #14283f;
+    --shadow-sm: 0 1px 2px rgba(20,40,63,0.06), 0 2px 8px rgba(20,40,63,0.06);
+    --shadow-md: 0 4px 12px rgba(20,40,63,0.10), 0 10px 30px rgba(20,40,63,0.08);
+    --shadow-lg: 0 8px 24px rgba(20,40,63,0.14), 0 20px 60px rgba(20,40,63,0.12);
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --sp-1: 6px;
+    --sp-2: 12px;
+    --sp-3: 18px;
+    --sp-4: 24px;
+    --sp-5: 36px;
+    --sp-6: 56px;
+    --sp-7: 80px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { color: var(--vt-navy); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    font-family: "SF Mono", "JetBrains Mono", Consolas, ui-monospace, monospace;
+    font-size: 0.92em;
+    background: rgba(20,40,63,0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  h1, h2, h3 { letter-spacing: -0.01em; }
+  h1 { font-size: 40px; line-height: 1.15; margin: 0 0 var(--sp-3); font-weight: 700; }
+  h2 { font-size: 26px; line-height: 1.2; margin: 0 0 var(--sp-3); font-weight: 700; }
+  h3 { font-size: 18px; line-height: 1.3; margin: 0 0 var(--sp-2); font-weight: 600; }
+  p { margin: 0 0 var(--sp-3); }
+  .lede { color: var(--ink-2); font-size: 17px; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 var(--sp-4); }
+  .band { padding: var(--sp-6) 0; }
+  .band.alt { background: var(--bg-alt); }
+  .band.deep { background: var(--bg-deep); color: #eaf1f9; }
+  .band.deep h2, .band.deep h3 { color: #fff; }
+
+  /* ---------- header / hero ---------- */
+  header.hero {
+    background: linear-gradient(135deg, var(--vt-navy) 0%, var(--vt-navy-2) 70%, #0f2440 100%);
+    color: #f3f7fc;
+    padding: var(--sp-5) 0 var(--sp-6);
+    position: relative;
+    overflow: hidden;
+  }
+  header.hero::after {
+    content: "";
+    position: absolute; inset: auto -10% -40% auto;
+    width: 60%; height: 120%;
+    background: radial-gradient(circle at center, rgba(245,130,31,0.10), transparent 60%);
+    pointer-events: none;
+  }
+  .topnav {
+    display: flex; align-items: center; gap: var(--sp-3);
+    padding: 0 0 var(--sp-5);
+  }
+  .topnav .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 15px; letter-spacing: 0.02em;
+    color: #fff;
+  }
+  .topnav .logo img { height: 26px; width: auto; display: block; }
+  .topnav nav { margin-left: auto; display: flex; gap: var(--sp-4); }
+  .topnav nav a { color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 500; }
+  .topnav nav a:hover { color: #fff; text-decoration: none; }
+
+  .hero-content { max-width: 760px; }
+  .hero h1 { color: #fff; }
+  .hero .lede {
+    color: rgba(255,255,255,0.85);
+    font-size: 19px;
+    max-width: 640px;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(245,130,31,0.18);
+    color: #fcd9b3;
+    border: 1px solid rgba(245,130,31,0.35);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: var(--sp-3);
+  }
+  .pill .material-symbols-outlined { font-size: 14px; }
+
+  /* ---------- section header ---------- */
+  .section-head {
+    display: flex; align-items: baseline; gap: var(--sp-3);
+    margin-bottom: var(--sp-4);
+  }
+  .section-head .kicker {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--vt-amber);
+  }
+  .section-head h2 { margin: 0; }
+
+  /* ---------- featured (onboarding) card ---------- */
+  .featured {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--sp-5);
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--vt-amber);
+    border-radius: var(--r-lg);
+    padding: var(--sp-5) var(--sp-5);
+    box-shadow: var(--shadow-md);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .featured:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .featured .body { min-width: 0; }
+  .featured .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--vt-amber-2);
+    background: rgba(245,130,31,0.10);
+    padding: 4px 10px; border-radius: 999px;
+    margin-bottom: var(--sp-2);
+  }
+  .featured .badge .material-symbols-outlined { font-size: 14px; }
+  .featured h2 { font-size: 28px; margin-bottom: 8px; }
+  .featured p { color: var(--ink-2); font-size: 16px; margin-bottom: var(--sp-3); }
+  .featured ul.meta {
+    list-style: none; padding: 0; margin: 0 0 var(--sp-3);
+    display: flex; flex-wrap: wrap; gap: var(--sp-3);
+    color: var(--ink-3); font-size: 13px;
+  }
+  .featured ul.meta li { display: flex; align-items: center; gap: 6px; }
+  .featured ul.meta .material-symbols-outlined { font-size: 16px; color: var(--vt-navy); }
+
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--vt-amber);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 22px;
+    border-radius: var(--r-md);
+    box-shadow: 0 2px 6px rgba(245,130,31,0.30), 0 8px 20px rgba(245,130,31,0.18);
+    transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    white-space: nowrap;
+  }
+  .cta:hover { background: var(--vt-amber-2); transform: translateY(-1px); text-decoration: none; box-shadow: 0 4px 10px rgba(245,130,31,0.40), 0 12px 28px rgba(245,130,31,0.24); }
+  .cta:focus-visible { outline: 3px solid rgba(245,130,31,0.45); outline-offset: 3px; }
+  .cta .material-symbols-outlined { font-size: 20px; }
+
+  /* ---------- support tools grid ---------- */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+  .tool-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: var(--sp-4) var(--sp-4) var(--sp-3);
+    box-shadow: var(--shadow-sm);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    display: flex; flex-direction: column;
+    min-height: 220px;
+  }
+  .tool-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(30,58,95,0.30);
+  }
+  .tool-card .icon {
+    width: 44px; height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(30,58,95,0.08);
+    color: var(--vt-navy);
+    border-radius: 10px;
+    margin-bottom: var(--sp-3);
+  }
+  .tool-card .icon .material-symbols-outlined { font-size: 24px; font-variation-settings: 'wght' 500; }
+  .tool-card h3 { font-size: 19px; margin: 0 0 6px; color: var(--ink); }
+  .tool-card .sub { color: var(--ink-3); font-size: 13px; margin-bottom: var(--sp-2); font-weight: 500; }
+  .tool-card p { color: var(--ink-2); font-size: 14.5px; margin-bottom: var(--sp-3); flex: 1; }
+  .tool-card .actions { display: flex; gap: var(--sp-3); align-items: center; }
+  .tool-card .open {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--vt-navy);
+    font-weight: 600; font-size: 14px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: #fff;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  }
+  .tool-card .open:hover {
+    background: var(--vt-navy); color: #fff; border-color: var(--vt-navy);
+    text-decoration: none;
+  }
+  .tool-card .open .material-symbols-outlined { font-size: 16px; }
+  .tool-card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--sp-2); }
+  .tool-card .tag {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--vt-navy);
+    background: rgba(30,58,95,0.06);
+    padding: 3px 8px; border-radius: 999px;
+  }
+
+  /* ---------- info row ---------- */
+  .info-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-4);
+    margin-top: var(--sp-5);
+  }
+  .info-row .col h3 {
+    font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.65); font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .info-row .col p { color: rgba(255,255,255,0.85); font-size: 14.5px; margin: 0; }
+  .info-row .col a { color: #fcd9b3; }
+
+  footer {
+    background: #0c1e35;
+    color: rgba(255,255,255,0.55);
+    text-align: center;
+    padding: var(--sp-4) var(--sp-4);
+    font-size: 13px;
+  }
+  footer a { color: rgba(255,255,255,0.75); }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 760px) {
+    h1 { font-size: 30px; }
+    h2 { font-size: 22px; }
+    .featured { grid-template-columns: 1fr; padding: var(--sp-4); }
+    .featured h2 { font-size: 24px; }
+    .cta { width: 100%; justify-content: center; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .info-row { grid-template-columns: 1fr; }
+    .topnav nav { display: none; }
+    .band { padding: var(--sp-5) 0; }
+  }
+
+  /* ---------- accessibility ---------- */
+  a:focus-visible, .open:focus-visible {
+    outline: 3px solid rgba(30,58,95,0.35);
+    outline-offset: 2px;
+    border-radius: var(--r-sm);
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topnav">
+      <span class="logo">
+        <img src="/versaterm-logo.png" alt="Versaterm" />
+        <span>Engineering Hub</span>
+      </span>
+      <nav>
+        <a href="#onboarding">Onboarding</a>
+        <a href="#support">Support tools</a>
+        <a href="#about">About</a>
+      </nav>
+    </div>
+
+    <div class="hero-content">
+      <span class="pill"><span class="material-symbols-outlined">workspaces</span> Internal &middot; Hackathon</span>
+      <h1>One stop for internal tools and onboarding.</h1>
+      <p class="lede">A small hub for the things engineering and support keep reaching for &mdash; the new-hire course up top, the productivity extensions just below. Bookmark this page.</p>
+    </div>
+  </div>
+</header>
+
+<section class="band" id="onboarding">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">Onboarding</span>
+      <h2>Start here</h2>
+    </div>
+
+    <a href="http://hack-a-thon-utility/onboarding/" class="featured" style="text-decoration:none; color:inherit;">
+      <div class="body">
+        <span class="badge"><span class="material-symbols-outlined">school</span> New to Versaterm? Start here</span>
+        <h2>MRE Onboarding Course</h2>
+        <p>An interactive guided tour through the Versaterm Mobile Records Environment (MRE) &mdash; covering the platform, the workflow, the tooling, and how everything fits together. Designed for new hires, useful as a refresher for everyone else.</p>
+        <ul class="meta">
+          <li><span class="material-symbols-outlined">timer</span> Self-paced</li>
+          <li><span class="material-symbols-outlined">menu_book</span> Interactive modules</li>
+          <li><span class="material-symbols-outlined">verified</span> Recommended on day one</li>
+        </ul>
+      </div>
+      <span class="cta">
+        Begin onboarding
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="band alt" id="support">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker">Support tools</span>
+      <h2>Day-to-day productivity</h2>
+    </div>
+    <p class="lede" style="margin-top:-8px; margin-bottom: var(--sp-4); max-width: 720px;">Chrome extensions and helpers built to take the grunt-work out of ticket triage and cross-tool linking.</p>
+
+    <div class="grid-2">
+
+      <a class="tool-card" href="/vtm-support-highway.html" style="text-decoration:none; color:inherit;">
+        <span class="icon"><span class="material-symbols-outlined">hub</span></span>
+        <div class="tags">
+          <span class="tag">Chrome extension</span>
+          <span class="tag">Zendesk</span>
+          <span class="tag">Jira</span>
+        </div>
+        <h3>VTM Support Highway</h3>
+        <div class="sub">Cross-link Zendesk &harr; Jira tickets in one click</div>
+        <p>Adds <em>Clone to Support Defect</em> and <em>Clone to Tech Request</em> buttons inside Zendesk tickets, mirrors them to Jira Cloud or on-prem SUP, and keeps both sides linked so updates stay in sync.</p>
+        <div class="actions">
+          <span class="open">Install &amp; docs <span class="material-symbols-outlined">arrow_outward</span></span>
+        </div>
+      </a>
+
+      <a class="tool-card" href="/sherlock.html" style="text-decoration:none; color:inherit;">
+        <span class="icon"><span class="material-symbols-outlined">psychology</span></span>
+        <div class="tags">
+          <span class="tag">Chrome extension</span>
+          <span class="tag">LLM-powered</span>
+          <span class="tag">Zendesk</span>
+        </div>
+        <h3>SHERLOCK</h3>
+        <div class="sub">AI ticket analysis on-demand</div>
+        <p>One click on a Zendesk ticket and SHERLOCK reaches into the local Postgres + LLM daemon to reproduce, diagnose, and draft a customer reply &mdash; with the full investigative report a button away.</p>
+        <div class="actions">
+          <span class="open">Install &amp; docs <span class="material-symbols-outlined">arrow_outward</span></span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<section class="band deep" id="about">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="kicker" style="color:#fcd9b3">About</span>
+      <h2 style="color:#fff">Built during the Versaterm hackathon</h2>
+    </div>
+    <p class="lede" style="color:rgba(255,255,255,0.85); max-width: 720px;">
+      Three small projects that scratched real itches &mdash; an onboarding course, a ticket-linking extension, and an AI assistant for support. Hosted on a single internal box so everyone can find them in one place.
+    </p>
+
+    <div class="info-row">
+      <div class="col">
+        <h3>Where it lives</h3>
+        <p><code>10.10.51.43:8765</code> &mdash; static install page server, plus the SHERLOCK LLM daemon on <code>:8867</code>.</p>
+      </div>
+      <div class="col">
+        <h3>Who built it</h3>
+        <p>Versaterm engineering &amp; support. Each tool's install page links to its source.</p>
+      </div>
+      <div class="col">
+        <h3>Found a bug?</h3>
+        <p>Ping the author listed on the individual install page, or file an issue against the project repo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Versaterm Engineering Hub &middot; internal use only &middot; <a href="#onboarding">back to top</a></p>
+</footer>
+
+</body>
+</html>
