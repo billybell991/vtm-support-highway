@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "VTM Support Highway",
+  "version": "1.4.2",
+  "description": "Create and link tickets across Zendesk, Jira Cloud, and Aha from any support app.",
+  "homepage_url": "https://github.com/billybell991/vtm-support-highway",
+  "permissions": ["storage", "activeTab", "tabs", "cookies", "idle", "notifications"],
+  "host_permissions": [
+    "https://*.zendesk.com/*",
+    "https://*.zdusercontent.com/*",
+    "http://*.versaterm.com/*",
+    "http://*.versaterm.com:8080/*",
+    "https://*.versaterm.com/*",
+    "https://*.aha.io/*",
+    "https://*.atlassian.net/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "VTM Support Highway"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://versaterminc.atlassian.net/browse/*"],
+      "js": ["content-jira.js"],
+      "css": ["content-jira.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://versatermhelp.zendesk.com/agent/*"],
+      "js": ["content-zendesk.js"],
+      "css": ["content-zendesk.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*.zendesk.com/*"],
+      "js": ["content-zendesk-autoonline.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
