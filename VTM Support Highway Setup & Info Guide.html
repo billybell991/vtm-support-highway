@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VTM Support Highway — Setup &amp; Info Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 760px; margin: 0 auto; padding: 32px 24px;
+    color: #1a1a2e; background: #f8f9fa; line-height: 1.6;
+  }
+  h1 { font-size: 28px; color: #1a3a5c; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #6c757d; margin-bottom: 24px; }
+  h2 { font-size: 18px; color: #1a3a5c; margin: 32px 0 12px; border-bottom: 2px solid #dee2e6; padding-bottom: 6px; }
+  h3 { font-size: 15px; margin: 16px 0 8px; color: #343a40; }
+  p, li { font-size: 14px; margin-bottom: 8px; }
+  ol, ul { padding-left: 24px; }
+  ol li { margin-bottom: 12px; }
+
+  .step {
+    background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
+    padding: 16px 20px; margin: 12px 0;
+  }
+  .step-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #0052cc; color: #fff; font-weight: 700; font-size: 14px;
+    margin-right: 8px; flex-shrink: 0;
+  }
+  .step-header {
+    display: flex; align-items: center; font-weight: 600; font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .step p { color: #495057; }
+
+  code, .code-block {
+    font-family: 'Consolas', 'Menlo', monospace;
+    background: #e9ecef; border-radius: 4px;
+  }
+  code { padding: 2px 6px; font-size: 13px; }
+  .code-block {
+    display: block; padding: 12px 16px; margin: 8px 0;
+    font-size: 13px; overflow-x: auto; white-space: pre;
+  }
+
+  .warning {
+    background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px;
+    padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #664d03;
+  }
+  .warning strong { display: block; margin-bottom: 4px; }
+
+  .info {
+    background: #e7f3ff; border: 1px solid #b6d4fe; border-radius: 6px;
+    padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #084298;
+  }
+
+  .success {
+    background: #d4edda; border: 1px solid #a3d9a5; border-radius: 6px;
+    padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #155724;
+  }
+
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #dee2e6; padding: 8px 12px; text-align: left; font-size: 13px; }
+  th { background: #e9ecef; font-weight: 600; }
+  tr:nth-child(even) td { background: #f8f9fa; }
+
+  .prereq-list li { margin-bottom: 6px; }
+  .check { color: #198754; font-weight: bold; }
+
+  /* ===== SCREENSHOT MOCKUPS ===== */
+  .screenshot-wrap {
+    margin: 16px 0 8px;
+  }
+  .screenshot-caption {
+    font-size: 11px; font-weight: 600; color: #6c757d;
+    text-align: center; margin-top: 8px; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .mockup-frame {
+    border: 1px solid #c8cdd3; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.13); background: #fff;
+  }
+  .mockup-chrome {
+    background: #e8eaed; padding: 8px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid #d0d3d8;
+  }
+  .mockup-dots { display: flex; gap: 5px; }
+  .mockup-dots span { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .mockup-url {
+    font-family: 'Consolas', 'Menlo', monospace; font-size: 11px; color: #444;
+    background: #fff; padding: 3px 10px; border-radius: 5px; flex: 1;
+    border: 1px solid #c8cdd3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── Jira page mockup ── */
+  .mj-topnav {
+    background: #0052cc; padding: 0 16px; height: 42px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .mj-logo { color: #fff; font-weight: 800; font-size: 14px; letter-spacing: -0.3px; }
+  .mj-navlink { color: rgba(255,255,255,0.75); font-size: 12px; }
+  .mj-breadcrumb {
+    background: #fff; padding: 10px 16px 4px;
+    font-size: 11px; color: #5e6c84;
+  }
+  .mj-breadcrumb a { color: #0052cc; text-decoration: none; }
+  .mj-issue-title-row {
+    background: #fff; padding: 4px 16px 8px;
+  }
+  .mj-issue-key { font-size: 11px; color: #5e6c84; margin-bottom: 2px; }
+  .mj-issue-title { font-size: 17px; font-weight: 700; color: #172b4d; }
+  .mj-toolbar {
+    background: #f4f5f7; padding: 7px 16px;
+    display: flex; align-items: center; gap: 6px;
+    border-top: 1px solid #dfe1e6; border-bottom: 1px solid #dfe1e6;
+    flex-wrap: wrap;
+  }
+  .mj-btn {
+    background: #f4f5f7; border: 1px solid #dfe1e6; border-radius: 3px;
+    padding: 4px 10px; font-size: 12px; color: #172b4d; font-weight: 500;
+  }
+  .mj-btn-vtm {
+    background: #0052cc; border: none; border-radius: 3px;
+    padding: 5px 13px; font-size: 12px; font-weight: 600;
+    color: #fff; display: inline-flex; align-items: center; gap: 5px;
+    box-shadow: 0 0 0 3px rgba(0,82,204,0.22);
+    animation: vtm-glow 2s ease-in-out infinite alternate;
+  }
+  @keyframes vtm-glow {
+    from { box-shadow: 0 0 0 3px rgba(0,82,204,0.22); }
+    to   { box-shadow: 0 0 0 5px rgba(0,82,204,0.40); }
+  }
+  .mj-callout {
+    background: #0052cc; color: #fff; font-size: 11px; font-weight: 600;
+    padding: 4px 9px; border-radius: 4px; white-space: nowrap;
+    margin-left: 4px;
+  }
+  .mj-callout::before { content: '◀ '; }
+  .mj-issue-body {
+    background: #fff; padding: 12px 16px; min-height: 60px;
+    display: flex; gap: 16px;
+  }
+  .mj-issue-desc { flex: 1; }
+  .mj-issue-desc-label { font-size: 11px; font-weight: 600; color: #5e6c84; margin-bottom: 4px; }
+  .mj-issue-desc-text { font-size: 12px; color: #172b4d; line-height: 1.5; }
+  .mj-issue-meta { width: 180px; flex-shrink: 0; border-left: 1px solid #f0f0f0; padding-left: 12px; }
+  .mj-meta-row { font-size: 11px; color: #5e6c84; margin-bottom: 6px; }
+  .mj-meta-val { font-weight: 600; color: #172b4d; }
+
+  /* ── Zendesk page mockup ── */
+  .mz-layout { display: flex; min-height: 120px; }
+  .mz-sidebar {
+    background: #03363d; width: 50px; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; padding-top: 14px; gap: 14px;
+  }
+  .mz-icon { width: 24px; height: 24px; background: rgba(255,255,255,0.12); border-radius: 4px; }
+  .mz-icon.active { background: rgba(255,255,255,0.30); }
+  .mz-main { flex: 1; background: #f3f4f5; }
+  .mz-topbar {
+    background: #fff; padding: 0 16px; height: 42px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #e9ebed;
+  }
+  .mz-topbar-left { font-size: 13px; font-weight: 600; color: #2f3941; }
+  .mz-topbar-right { display: flex; align-items: center; gap: 6px; }
+  .mz-btn {
+    background: #fff; border: 1px solid #d8dcde; border-radius: 4px;
+    padding: 5px 11px; font-size: 12px; color: #2f3941; font-weight: 500;
+  }
+  .mz-btn-vtm {
+    background: #0052cc; border: none; border-radius: 4px;
+    padding: 5px 13px; font-size: 12px; font-weight: 600;
+    color: #fff; display: inline-flex; align-items: center; gap: 5px;
+    box-shadow: 0 0 0 3px rgba(0,82,204,0.22);
+    animation: vtm-glow 2s ease-in-out infinite alternate;
+  }
+  .mz-callout {
+    background: #0052cc; color: #fff; font-size: 11px; font-weight: 600;
+    padding: 4px 9px; border-radius: 4px; white-space: nowrap;
+  }
+  .mz-callout::after { content: ' ▶'; }
+  .mz-ticket-area { padding: 12px 16px; background: #fff; margin: 10px; border-radius: 6px; border: 1px solid #e9ebed; }
+  .mz-ticket-id { font-size: 11px; color: #8898a4; margin-bottom: 3px; }
+  .mz-ticket-title { font-size: 14px; font-weight: 600; color: #2f3941; margin-bottom: 6px; }
+  .mz-ticket-body { font-size: 12px; color: #49545c; line-height: 1.5; }
+
+  /* ── Popup mockup ── */
+  .mockup-popup {
+    border: 1px solid #c8cdd3; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.16); background: #fff;
+    max-width: 520px; margin: 12px auto;
+  }
+  .mp-header {
+    background: #1a3a5c; padding: 7px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mp-header-left { display: flex; align-items: center; gap: 10px; }
+  .mp-logo-icon {
+    width: 24px; height: 24px; background: rgba(255,255,255,0.15);
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #fff;
+  }
+  .mp-title { color: #fff; font-size: 14px; font-weight: 700; }
+  .mp-subtitle { color: rgba(255,255,255,0.6); font-size: 10px; }
+  .mp-gear { color: rgba(255,255,255,0.65); font-size: 17px; cursor: pointer; padding: 2px; }
+  .mp-body { padding: 8px 12px 0; }
+  .mp-detect { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+  .mp-badge-zd { background: #03363d; color: #fff; padding: 3px 10px; border-radius: 14px; font-size: 11px; font-weight: 700; }
+  .mp-badge-jira { background: #0052cc; color: #fff; padding: 3px 10px; border-radius: 14px; font-size: 11px; font-weight: 700; }
+  .mp-ticket-title { font-size: 12px; font-weight: 600; color: #212529; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
+  .mp-detect-hint { font-size: 10px; color: #868e96; margin-bottom: 8px; }
+  .mp-preview-heading { font-size: 12px; font-weight: 700; color: #1a3a5c; margin: 4px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #dee2e6; }
+  .mp-form { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 4px; }
+  .mp-full { grid-column: 1 / -1; }
+  .mp-label { display: flex; flex-direction: column; gap: 2px; font-size: 10px; font-weight: 600; color: #495057; }
+  .mp-input {
+    border: 1px solid #ced4da; border-radius: 3px; padding: 4px 7px;
+    font-size: 11px; color: #212529; background: #fff;
+  }
+  .mp-select {
+    border: 1px solid #ced4da; border-radius: 3px; padding: 4px 7px;
+    font-size: 11px; color: #212529; background: #fff;
+  }
+  .mp-textarea {
+    border: 1px solid #ced4da; border-radius: 3px; padding: 4px 7px;
+    font-size: 11px; color: #212529; background: #fff; height: 42px;
+    resize: none; width: 100%;
+  }
+  .mp-footer {
+    background: #f8f9fa; border-top: 1px solid #dee2e6; padding: 9px 12px;
+  }
+  .mp-chk-row {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; color: #495057; margin-bottom: 4px;
+  }
+  .mp-chk-row input { accent-color: #0052cc; }
+  .mp-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .mp-btn-primary {
+    background: #0052cc; color: #fff; border: none; border-radius: 4px;
+    padding: 7px 0; font-size: 12px; font-weight: 600; cursor: pointer; flex: 1;
+  }
+  .mp-btn-ghost {
+    background: #fff; color: #6c757d; border: 1px solid #ced4da; border-radius: 4px;
+    padding: 7px 0; font-size: 12px; cursor: pointer; flex: 1; opacity: 0.55;
+  }
+
+  /* ── How-it-works flow ── */
+  .flow {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: #fff; border: 1px solid #dee2e6; border-radius: 8px;
+    padding: 20px 16px; margin: 14px 0; flex-wrap: wrap;
+  }
+  .flow-box {
+    padding: 12px 16px; border-radius: 8px; text-align: center;
+    font-size: 13px; font-weight: 700; min-width: 120px;
+  }
+  .fb-zd   { background: #e0f0f1; border: 2px solid #03363d; color: #03363d; }
+  .fb-jira { background: #e6f0ff; border: 2px solid #0052cc; color: #0052cc; }
+  .fb-ext  { background: #fff8e1; border: 2px solid #e6a817; color: #664d03; }
+  .flow-sub { font-size: 10px; font-weight: 400; color: #6c757d; margin-top: 4px; }
+  .flow-arrow { font-size: 22px; color: #adb5bd; }
+</style>
+</head>
+<body>
+
+<h1>⇄ VTM Support Highway</h1>
+<p class="subtitle">Browser Extension — Jira ↔ Zendesk Ticket Cloning · v1.0 Setup &amp; Info Guide</p>
+
+<!-- ═══════════════════════════════════════════════════ WHAT IT DOES -->
+<h2>What It Does</h2>
+
+<p>
+  VTM Support Highway is a Chrome/Edge browser extension that eliminates the manual copy-paste work of
+  creating tickets across <strong>Zendesk</strong> and <strong>Jira</strong>. When a support case in one
+  system needs a matching ticket in the other, the extension transfers everything — summary, description,
+  comments, attachments — in a few clicks, and cross-links the two tickets so agents always know both sides exist.
+</p>
+
+<div class="flow">
+  <div class="flow-box fb-zd">Zendesk Ticket<div class="flow-sub">versatermhelp.zendesk.com</div></div>
+  <div class="flow-arrow">⇄</div>
+  <div class="flow-box fb-ext">VTM Support Highway<div class="flow-sub">browser extension</div></div>
+  <div class="flow-arrow">⇄</div>
+  <div class="flow-box fb-jira">Jira Cloud CRMS<div class="flow-sub">versaterminc.atlassian.net</div></div>
+</div>
+
+<h3>Key capabilities</h3>
+<table>
+  <tr><th>Feature</th><th>Description</th></tr>
+  <tr><td><strong>One-click clone</strong></td><td>Creates a ticket in the target system with summary, description, priority, and custom fields already mapped and filled in</td></tr>
+  <tr><td><strong>Copy comments</strong></td><td>All comments are transferred with original author names and timestamps preserved</td></tr>
+  <tr><td><strong>Copy attachments</strong></td><td>All files and screenshots are downloaded from the source and uploaded to the new ticket</td></tr>
+  <tr><td><strong>Cross-link</strong></td><td>An internal note is added to both tickets linking to each other — no hunting around for the related ticket</td></tr>
+  <tr><td><strong>Duplicate detection</strong></td><td>If a clone already exists, the extension offers Resync instead of creating a duplicate</td></tr>
+  <tr><td><strong>Resync</strong></td><td>Incrementally syncs new comments and attachments added since the last clone (never duplicates existing content)</td></tr>
+  <tr><td><strong>CRMS fields</strong></td><td>Client, Contact, Severity, Component, Fix Build, and Steps to Reproduce are automatically mapped for the CRMS Jira Cloud project</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════ THE BUTTONS -->
+<h2>The Buttons</h2>
+<p>
+  Once installed, the extension automatically injects a button into every Jira Cloud CRMS ticket page and every
+  Zendesk ticket page. You don't need to open the toolbar popup — just click the button directly on the page.
+</p>
+
+<h3>On a Jira Cloud CRMS ticket — "⇄ Clone to Zendesk"</h3>
+<p>A blue <strong>⇄ Clone to Zendesk</strong> button appears on the CRMS ticket page (in the header toolbar or as a floating button top-right).</p>
+
+<div class="screenshot-wrap">
+  <div class="mockup-frame">
+    <!-- browser chrome -->
+    <div class="mockup-chrome">
+      <div class="mockup-dots">
+        <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+      </div>
+      <div class="mockup-url">https://versaterminc.atlassian.net/browse/CRMS-37</div>
+    </div>
+    <!-- Jira top nav -->
+    <div class="mj-topnav">
+      <span class="mj-logo">JIRA</span>
+      <span class="mj-navlink">Projects</span>
+      <span class="mj-navlink">Issues</span>
+      <span class="mj-navlink">Boards</span>
+    </div>
+    <!-- Breadcrumb -->
+      <div class="mj-breadcrumb">
+      <a href="#">VTM Support</a> › <a href="#">CRMS</a> › CRMS-37
+    </div>
+    <!-- Issue title -->
+    <div class="mj-issue-title-row">
+      <div class="mj-issue-key">CRMS-37 &nbsp;·&nbsp; Support Defect</div>
+      <div class="mj-issue-title">Standalone BOLO/FYI entries not appearing in MDT filtered BOLO queries</div>
+    </div>
+    <!-- Operations toolbar -->
+    <div class="mj-toolbar">
+      <span class="mj-btn">Edit</span>
+      <span class="mj-btn">Comment</span>
+      <span class="mj-btn">Assign</span>
+      <span class="mj-btn">Workflow ▾</span>
+      <span class="mj-btn">Admin ▾</span>
+      &nbsp;
+      <span class="mj-btn-vtm">⇄ Clone to Zendesk</span>
+      <span class="mj-callout">Added by VTM Support Highway</span>
+    </div>
+    <!-- Issue body snippet -->
+    <div class="mj-issue-body">
+      <div class="mj-issue-desc">
+        <div class="mj-issue-desc-label">Description</div>
+        <div class="mj-issue-desc-text">Client reports that the Dispatch application throws an unhandled exception when the CAD map viewer is opened on machines running Windows 11 22H2. Reproducible on fresh install. Stack trace attached.</div>
+      </div>
+      <div class="mj-issue-meta">
+        <div class="mj-meta-row">Status: <span class="mj-meta-val">Open</span></div>
+        <div class="mj-meta-row">Priority: <span class="mj-meta-val">High</span></div>
+        <div class="mj-meta-row">Assignee: <span class="mj-meta-val">J. Smith</span></div>
+        <div class="mj-meta-row">Reporter: <span class="mj-meta-val">B. Bell</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="screenshot-caption">Jira Cloud CRMS ticket — the blue "⇄ Clone to Zendesk" button appears in the header (or as a floating button top-right)</div>
+</div>
+
+<h3>On a Zendesk ticket — "⇄ Clone to Jira"</h3>
+<p>A blue <strong>⇄ Clone to Jira</strong> button appears in the ticket header bar alongside the standard Zendesk actions.</p>
+
+<div class="screenshot-wrap">
+  <div class="mockup-frame">
+    <!-- browser chrome -->
+    <div class="mockup-chrome">
+      <div class="mockup-dots">
+        <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+      </div>
+      <div class="mockup-url">https://versatermhelp.zendesk.com/agent/tickets/3669</div>
+    </div>
+    <!-- Zendesk layout -->
+    <div class="mz-layout">
+      <!-- Dark teal sidebar -->
+      <div class="mz-sidebar">
+        <div class="mz-icon active"></div>
+        <div class="mz-icon"></div>
+        <div class="mz-icon"></div>
+        <div class="mz-icon"></div>
+      </div>
+      <!-- Main area -->
+      <div class="mz-main">
+        <!-- Top bar with action buttons -->
+        <div class="mz-topbar">
+          <div class="mz-topbar-left">Ticket #3669 &nbsp;·&nbsp; Open</div>
+          <div class="mz-topbar-right">
+            <span class="mz-callout">Added by VTM Support Highway</span>
+            <span class="mz-btn-vtm">⇄ Clone to Jira</span>
+            <span class="mz-btn">Submit as Solved ▾</span>
+          </div>
+        </div>
+        <!-- Ticket content -->
+        <div class="mz-ticket-area">
+          <div class="mz-ticket-id">Ticket #3669 &nbsp;·&nbsp; Problem &nbsp;·&nbsp; High</div>
+          <div class="mz-ticket-title">Network connectivity issues after VPN update — Ottawa Police Service</div>
+          <div class="mz-ticket-body">
+            We are experiencing intermittent network drops on all CAD workstations since the forced VPN client update deployed last Tuesday. The issue affects approximately 30 machines across two shifts.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screenshot-caption">Zendesk ticket — the blue "⇄ Clone to Jira" button appears in the ticket header</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ CREATE TICKET SCREEN -->
+<h2>The Create Ticket Screen</h2>
+<p>
+  Clicking either button opens the <strong>VTM Support Highway</strong> window. The extension automatically
+  fetches the source ticket's details and pre-fills all the fields. Review and adjust anything you need,
+  then click <strong>Create</strong>.
+</p>
+
+<div class="screenshot-wrap">
+  <div class="mockup-popup">
+    <!-- Header -->
+    <div class="mp-header">
+      <div class="mp-header-left">
+        <div class="mp-logo-icon">⇄</div>
+        <div>
+          <div class="mp-title">VTM Support Highway</div>
+          <div class="mp-subtitle">Create &amp; link tickets across systems</div>
+        </div>
+      </div>
+      <div class="mp-gear">⚙</div>
+    </div>
+    <!-- Body -->
+    <div class="mp-body">
+      <!-- Detection row -->
+      <div class="mp-detect">
+        <span class="mp-badge-zd">ZENDESK</span>
+        <span class="mp-ticket-title">#3669 — Network connectivity issues after VPN update</span>
+      </div>
+      <div class="mp-detect-hint">ℹ&nbsp; Detected from active tab · Creating in Jira SUP</div>
+
+      <div class="mp-preview-heading">Preview: New Jira Ticket</div>
+
+      <!-- Form fields -->
+      <div class="mp-form">
+        <div class="mp-label mp-full">Summary
+          <div class="mp-input">Network connectivity issues after VPN update — Ottawa Police Service</div>
+        </div>
+        <div class="mp-label">Project Key
+          <select class="mp-select"><option>CRMS (Canadian RMS)</option></select>
+        </div>
+        <div class="mp-label">Issue Type
+          <select class="mp-select"><option>Support Defect</option></select>
+        </div>
+        <div class="mp-label">Priority
+          <select class="mp-select"><option>High</option><option>Critical</option><option>Medium</option><option>Low</option></select>
+        </div>
+        <div class="mp-label">Severity
+          <select class="mp-select"><option>Normal</option><option>Major</option><option>Minor</option><option>Enhancement</option></select>
+        </div>
+        <div class="mp-label mp-full">Original Submittal
+          <div class="mp-input" style="height:38px;line-height:1.5;overflow:hidden;font-size:10px;color:#495057;">We are experiencing intermittent network drops on all CAD workstations since the forced VPN update last Tuesday…</div>
+        </div>
+        <div class="mp-label">Client <span style="font-weight:400;font-size:9px">(exact name)</span>
+          <div class="mp-input">Saskatoon</div>
+        </div>
+        <div class="mp-label">Component
+          <div class="mp-input">BOLO</div>
+        </div>
+        <div class="mp-label">Contact <span style="font-weight:400;font-size:9px">(exact name)</span>
+          <div class="mp-input">Kim Dong</div>
+        </div>
+        <div class="mp-label">Fix Build
+          <div class="mp-input">8.1.032</div>
+        </div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div class="mp-footer">
+      <div class="mp-chk-row"><input type="checkbox" checked disabled> Add internal comment with link back to source ticket</div>
+      <div class="mp-chk-row"><input type="checkbox" checked disabled> Copy all comments</div>
+      <div class="mp-chk-row"><input type="checkbox" checked disabled> Copy all attachments &amp; screenshots</div>
+      <div class="mp-actions">
+        <button class="mp-btn-primary">Create Jira Ticket</button>
+        <button class="mp-btn-ghost" disabled>Create Zendesk Ticket</button>
+      </div>
+    </div>
+  </div>
+  <div class="screenshot-caption">The create ticket screen — fields are pre-filled from the source ticket; review and click Create</div>
+</div>
+
+<div class="info">
+  <strong>Existing clone?</strong> If you click the button on a ticket that has already been cloned,
+  the extension detects the existing link and offers a <strong>Resync</strong> button instead — which
+  copies any new comments or attachments added since the last clone, without creating duplicates.
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SUPPORTED BROWSERS -->
+<h2>Supported Browsers</h2>
+<table>
+  <tr><th>Browser</th><th>Supported</th><th>Notes</th></tr>
+  <tr><td><strong>Google Chrome</strong></td><td>✅ Yes</td><td>Primary target. Fully tested.</td></tr>
+  <tr><td><strong>Microsoft Edge</strong></td><td>✅ Yes</td><td>Same Chromium engine. Works identically.</td></tr>
+  <tr><td><strong>Safari</strong></td><td>❌ No</td><td>Safari requires Xcode packaging — not supported for internal distribution.</td></tr>
+  <tr><td><strong>Firefox</strong></td><td>❌ No</td><td>Uses a different extension format (WebExtensions manifest v2).</td></tr>
+</table>
+
+<h2>Prerequisites</h2>
+<ul class="prereq-list">
+  <li><span class="check">✓</span> Google Chrome or Microsoft Edge browser</li>
+  <li><span class="check">✓</span> Active session logged into <strong>Zendesk</strong> at <code>https://versatermhelp.zendesk.com</code></li>
+  <li><span class="check">✓</span> Your <strong>Versaterm email address</strong> (for the one-time Settings entry)</li>
+  <li><span class="check">✓</span> The extension folder (this ZIP, extracted)</li>
+</ul>
+
+<div class="info">
+  <strong>No API token setup needed.</strong> The shared API token is built into the extension.
+  Just enter your email in Settings after installation — that's the only step.
+</div>
+
+<h2>Installation (2 minutes)</h2>
+
+<div class="step">
+  <div class="step-header"><span class="step-number">1</span> Extract the ZIP</div>
+  <p>Extract <code>vtm_support_highway_v1.0.zip</code> to a permanent folder on your computer.</p>
+  <p><strong>Windows:</strong> Right-click → "Extract All" → choose a location like <code>C:\Tools\vtm_support_highway</code></p>
+  <p><strong>Mac:</strong> Double-click the ZIP → move the folder to <code>~/Tools/vtm_support_highway</code></p>
+  <div class="warning">
+    <strong>Don't delete this folder!</strong>
+    Your browser loads the extension directly from this folder. If you move or delete it, the extension will break.
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-header"><span class="step-number">2</span> Open the Extensions Page</div>
+  <p>Type one of these in your browser's address bar and press Enter:</p>
+  <table>
+    <tr><th>Browser</th><th>Address</th></tr>
+    <tr><td>Chrome</td><td><code>chrome://extensions</code></td></tr>
+    <tr><td>Edge</td><td><code>edge://extensions</code></td></tr>
+  </table>
+</div>
+
+<div class="step">
+  <div class="step-header"><span class="step-number">3</span> Enable Developer Mode</div>
+  <p><strong>Chrome:</strong> Find the <strong>"Developer mode"</strong> toggle in the <strong>top-right</strong> corner. Turn it <strong>ON</strong>.</p>
+  <p><strong>Edge:</strong> Find the <strong>"Developer mode"</strong> toggle in the <strong>bottom-left</strong> sidebar. Turn it <strong>ON</strong>.</p>
+  <p style="margin-top:4px; font-size:12px; color:#6c757d;">Edge may also prompt you to "Allow extensions from other stores" — click <strong>Allow</strong> if asked.</p>
+</div>
+
+<div class="step">
+  <div class="step-header"><span class="step-number">4</span> Load the Extension</div>
+  <p>Click <strong>"Load unpacked"</strong> (top area of the page).</p>
+  <p>Browse to the folder you extracted in Step 1 (the one containing <code>manifest.json</code>).</p>
+  <p>Click <strong>"Select Folder"</strong> (Windows) or <strong>"Open"</strong> (Mac).</p>
+</div>
+
+<div class="step">
+  <div class="step-header"><span class="step-number">5</span> Enter Your Email Address</div>
+  <p>Click the <strong>⚙️ gear icon</strong> in the VTM Support Highway popup, then enter your email in both fields:</p>
+  <table>
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>Jira Cloud &gt; Email</td><td>Your Versaterm email (e.g. <code>your.name@versaterm.com</code>)</td></tr>
+    <tr><td>Zendesk &gt; Email</td><td>Your Versaterm email (e.g. <code>your.name@versaterm.com</code>)</td></tr>
+  </table>
+  <p style="margin-top:8px">The API tokens are already built in — no token setup required. Click <strong>Save</strong>.</p>
+</div>
+
+<div class="step">
+  <div class="step-header"><span class="step-number">6</span> Pin the Extension</div>
+  <p><strong>Chrome:</strong> Click the <strong>puzzle piece icon</strong> (🧩) in the toolbar → find "VTM Support Highway" → click the <strong>pin icon</strong>.</p>
+  <p><strong>Edge:</strong> Click the <strong>puzzle piece icon</strong> (🧩) in the toolbar → find "VTM Support Highway" → click the <strong>eye icon</strong> to show in toolbar.</p>
+</div>
+
+<div class="success">
+  <strong>Done!</strong> You should see the VTM Support Highway icon in your toolbar. The "⇄ Clone to Zendesk" and "⇄ Clone to Jira" buttons will appear automatically on Jira CRMS tickets and Zendesk ticket pages.
+</div>
+
+<h2>Quick Start</h2>
+
+<p>There are two ways to use the extension — both open the same create ticket screen shown above.</p>
+
+<h3>Option A — Click the in-page button (easiest)</h3>
+<ol>
+  <li>Open a <strong>Jira CRMS ticket</strong> — click the blue <strong>⇄ Clone to Zendesk</strong> button (in the header or floating top-right)</li>
+  <li><em>— or —</em> open a <strong>Zendesk ticket</strong> — click the blue <strong>⇄ Clone to Jira</strong> button in the ticket header</li>
+  <li>The create ticket window opens with all fields pre-filled from the source ticket</li>
+  <li>Review the fields, adjust anything needed, and click <strong>Create Jira Ticket</strong> or <strong>Create Zendesk Ticket</strong></li>
+</ol>
+
+<h3>Option B — Use the toolbar popup</h3>
+<ol>
+  <li>Navigate to a <strong>Jira CRMS ticket</strong> or a <strong>Zendesk ticket</strong></li>
+  <li>Click the <strong>VTM Support Highway</strong> icon (⇄) in the browser toolbar</li>
+  <li>The popup auto-detects the current ticket and shows the same preview form</li>
+  <li>Check/uncheck <em>Copy comments</em>, <em>Copy attachments</em>, and <em>Cross-link</em> as needed</li>
+  <li>Click <strong>Create Jira Ticket</strong> or <strong>Create Zendesk Ticket</strong></li>
+</ol>
+
+<div class="info">
+  <strong>Tip — manual entry:</strong> If no ticket is detected automatically (e.g. you opened the popup from a different page),
+  use the manual entry form at the top: choose the source system, enter the ticket key or number, and click <strong>Fetch</strong>.
+</div>
+
+<h2>Settings</h2>
+<p>Click the <strong>⚙️ gear icon</strong> in the popup header. The only things you need to enter are your email addresses:</p>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Jira Cloud &gt; Email</td><td><strong>Your</strong> Versaterm email (e.g. <code>your.name@versaterm.com</code>)</td></tr>
+  <tr><td>Jira Cloud &gt; API Token</td><td>✅ Pre-configured — do not change</td></tr>
+  <tr><td>Zendesk &gt; Email</td><td><strong>Your</strong> Versaterm email (e.g. <code>your.name@versaterm.com</code>)</td></tr>
+  <tr><td>Zendesk &gt; API Token</td><td>✅ Pre-configured — do not change</td></tr>
+</table>
+<p>Click <strong>Save</strong>. You only do this once per machine.</p>
+
+<h2>Troubleshooting</h2>
+
+<table>
+  <tr><th>Problem</th><th>Fix</th></tr>
+  <tr><td>"Jira not configured" error</td><td>Open Settings (⚙), make sure your email is entered, click Save</td></tr>
+  <tr><td>401 Unauthorized from Jira</td><td>The shared API token may have expired. Contact Bill Bell to get an updated extension package.</td></tr>
+  <tr><td>"Option value is not valid" error</td><td>The Client or Contact field value from Zendesk didn’t match any Jira option. Clear those fields manually in the form before creating</td></tr>
+  <tr><td>"Zendesk not configured" error</td><td>Make sure you're logged into Zendesk in the same Chrome profile</td></tr>
+  <tr><td>Button doesn't appear on Jira page</td><td>Jira Cloud loads slowly — wait a few seconds. The floating button (top-right) always appears as a fallback. Refresh if needed.</td></tr>
+  <tr><td>Button doesn't appear on Zendesk</td><td>Zendesk's SPA can be slow — wait 3–5 seconds. Try refreshing.</td></tr>
+  <tr><td>Attachment copy fails</td><td>Check you're logged into both systems. Some very large files may time out.</td></tr>
+  <tr><td>Extension disappeared</td><td>You may have deleted the source folder. Re-extract and re-load.</td></tr>
+  <tr><td>"This extension is not from the Chrome Web Store"</td><td>Normal for developer-loaded extensions. Click "Keep" if prompted.</td></tr>
+  <tr><td>Edge: "Allow extensions from other stores"</td><td>Click "Allow" — this is required for non-Edge-store extensions.</td></tr>
+</table>
+
+<h2>Updating</h2>
+<ol>
+  <li>Extract the new ZIP, replacing the old folder contents</li>
+  <li>Go to <code>chrome://extensions</code> (Chrome) or <code>edge://extensions</code> (Edge)</li>
+  <li>Click the <strong>refresh icon</strong> (↻) on the VTM Support Highway card</li>
+</ol>
+
+<h2>Support</h2>
+<p>Questions or issues? Contact <strong>Bill Bell</strong> — <code>bill.bell@versaterm.com</code></p>
+
+</body>
+</html>

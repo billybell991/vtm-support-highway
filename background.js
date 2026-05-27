@@ -72,11 +72,82 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return false;
   }
 
+  // ────── Zendesk Auto-Online: toast notifications from content script ──────
+  if (msg && msg.type === 'autoOnlineNotify' && msg.title && msg.message) {
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: msg.title,
+      message: msg.message,
+      priority: 0
+    });
+    sendResponse({ ok: true });
+    return false;
+  }
+
   return false;
 });
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('[VTM Support Highway] Extension installed/updated.');
+  nudgeAllZendeskTabs('installed');
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// Zendesk Auto-Online watchdog — pokes any open Zendesk tab to set status to
+// Online whenever we have good reason to believe the user is actively at
+// their computer.
+// ══════════════════════════════════════════════════════════════════════════
+
+const ZENDESK_URL_FILTER = 'https://*.zendesk.com/*';
+const ZENDESK_URL_RE = /^https:\/\/[^/]+\.zendesk\.com\//;
+
+// Detect "active" sooner than the 60s default.
+try { chrome.idle.setDetectionInterval(30); } catch (_) {}
+
+function nudgeAllZendeskTabs(reason) {
+  chrome.tabs.query({ url: ZENDESK_URL_FILTER }, (tabs) => {
+    if (!tabs || tabs.length === 0) return;
+    for (const tab of tabs) {
+      chrome.tabs.sendMessage(
+        tab.id,
+        { type: 'autoOnlineForce', reason },
+        () => void chrome.runtime.lastError
+      );
+    }
+  });
+}
+
+// 1. Wake from sleep / return from idle
+chrome.idle.onStateChanged.addListener((newState) => {
+  if (newState === 'active') nudgeAllZendeskTabs('idle->active');
+});
+
+// 2. Browser startup
+chrome.runtime.onStartup.addListener(() => nudgeAllZendeskTabs('startup'));
+
+// 3. Tab finished loading or URL changed
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status !== 'complete') return;
+  if (!tab.url || !ZENDESK_URL_RE.test(tab.url)) return;
+  chrome.tabs.sendMessage(
+    tabId,
+    { type: 'autoOnlineForce', reason: 'tab-loaded' },
+    () => void chrome.runtime.lastError
+  );
+});
+
+// 4. Tab focused (covers alt-tab + switching tabs).
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  chrome.tabs.get(tabId, (tab) => {
+    if (chrome.runtime.lastError || !tab || !tab.url) return;
+    if (!ZENDESK_URL_RE.test(tab.url)) return;
+    chrome.tabs.sendMessage(
+      tabId,
+      { type: 'autoOnlineForce', reason: 'tab-activated' },
+      () => void chrome.runtime.lastError
+    );
+  });
 });
 
 // ────── Create Ticket (runs in background) ──────
@@ -100,9 +171,14 @@ async function handleCreateTicket(msg) {
       existing = await API.findExistingZdClone(cfg, sourceInfo.ticketId);
     } else if (target === 'jira') {
       const searchKey = sourceInfo.source === 'zendesk' ? 'ZD-' + sourceInfo.ticketId : sourceInfo.ticketId;
-      console.log('[BG] Duplicate check: searching Jira for "' + searchKey + '"');
+      console.log('[BG] Duplicate check: searching Jira Cloud for "' + searchKey + '"');
       existing = await API.findExistingJiraClone(cfg, searchKey);
       console.log('[BG] Duplicate check result:', existing ? existing.key : 'none found');
+    } else if (target === 'jira-onprem') {
+      const searchKey = sourceInfo.source === 'zendesk' ? 'ZD-' + sourceInfo.ticketId : sourceInfo.ticketId;
+      console.log('[BG] Duplicate check: searching on-prem Jira for "' + searchKey + '"');
+      existing = await API.findExistingOnPremJiraClone(cfg, searchKey);
+      console.log('[BG] On-prem duplicate check result:', existing ? existing.key : 'none found');
     }
   } catch (e) {
     console.warn('[BG] Duplicate check failed:', e);
@@ -132,6 +208,8 @@ async function handleCreateTicket(msg) {
   let result;
   if (target === 'jira') {
     result = await API.createJiraTicket(cfg, fields);
+  } else if (target === 'jira-onprem') {
+    result = await API.createOnPremJiraTicket(cfg, fields);
   } else if (target === 'zendesk') {
     // If source is Jira, upload inline images as proper ZD attachments
     if (sourceInfo.source === 'jira' && fields.description) {
@@ -281,13 +359,15 @@ async function handleQuickClone(msg, sender) {
   } else if (targetSystem === 'jira') {
     // Jira target — fetch create meta to know allowed fields
     const issueType = 'Support'; // default for SUP
-    const meta = await API.fetchJiraCreateMeta(cfg, 'SUP', issueType);
+    const metaResult = await API.fetchJiraCreateMeta(cfg, 'SUP', issueType);
+    const meta = metaResult.fields;
     const onScreen = (fid) => fid in meta;
     const fields = {
       project: 'SUP',
       issueType: issueType,
       summary: '[ZD-' + sourceKey + '] ' + source.summary,
-      description: source.description || source.summary,
+      // On-prem Tech Requests: customer message goes in Original Submittal, not Description.
+      description: '',
       originalSubmittal: source.description || '',
       priority: source.priorityJira || 'Medium'
     };
@@ -488,11 +568,15 @@ async function doCopyCommentsAndAttachments(cfg, target, result, sourceInfo, doC
   }
 
   // ── Copy comments ──
-  if (doCopyComments && target === 'jira') {
+  if (doCopyComments && (target === 'jira' || target === 'jira-onprem')) {
     for (const c of comments) {
       const prefix = c.author ? ('*' + c.author + '* (' + (c.created || '') + '):\n') : '';
       const marker = '\n{color:#ffffff}{vtm-sync:comment-' + c.id + '}{color}';
-      await API.addJiraComment(cfg, result.key, prefix + (c.body || '') + marker);
+      if (target === 'jira') {
+        await API.addJiraComment(cfg, result.key, prefix + (c.body || '') + marker);
+      } else {
+        await API.addOnPremJiraComment(cfg, result.key, prefix + (c.body || '') + marker);
+      }
       copiedComments++;
     }
   } else if (doCopyComments && target === 'zendesk') {
@@ -525,6 +609,8 @@ async function doCopyCommentsAndAttachments(cfg, target, result, sourceInfo, doC
         }
         if (target === 'jira') {
           await API.uploadJiraAttachment(cfg, result.key, a.filename, blob);
+        } else if (target === 'jira-onprem') {
+          await API.uploadOnPremJiraAttachment(cfg, result.key, a.filename, blob);
         } else if (target === 'zendesk') {
           const upload = await API.uploadZdAttachment(cfg, a.filename, blob);
           uploadTokens.push(upload.token);
@@ -552,7 +638,7 @@ async function doCrossLink(cfg, target, result, sourceInfo) {
   const zdUrl = cfg.zdUrl.replace(/\/+$/, '');
 
   if (sourceInfo.source === 'zendesk' && target === 'jira') {
-    // Link on source ZD ticket → new Jira ticket (internal note)
+    // Link on source ZD ticket → new Jira Cloud ticket (internal note)
     const zdComments = await API.fetchZdComments(cfg, sourceInfo.ticketId);
     const linkSignature = 'Jira ticket created:</strong>';
     const alreadyLinkedZd = zdComments.some(c => (c.html_body || '').includes(linkSignature) && (c.html_body || '').includes(result.key));
@@ -563,9 +649,26 @@ async function doCrossLink(cfg, target, result, sourceInfo) {
     } else {
       console.log('[BG] ZD already has link note for ' + result.key + ', skipping');
     }
-    // Link on new Jira ticket → source ZD ticket (remote link in Links section)
+    // Link on new Jira Cloud ticket → source ZD ticket (remote link in Links section)
     const sourceUrl = zdUrl + '/agent/tickets/' + sourceInfo.ticketId;
     await addRemoteLinkIfMissing(cfg, result.key, sourceUrl, 'ZD-' + sourceInfo.ticketId, 'Zendesk');
+    return true;
+
+  } else if (sourceInfo.source === 'zendesk' && target === 'jira-onprem') {
+    // Link on source ZD ticket → new on-prem Jira ticket (internal note)
+    const zdComments = await API.fetchZdComments(cfg, sourceInfo.ticketId);
+    const linkSignature = 'Jira ticket created:</strong>';
+    const alreadyLinkedZd = zdComments.some(c => (c.html_body || '').includes(linkSignature) && (c.html_body || '').includes(result.key));
+    if (!alreadyLinkedZd) {
+      const html = '<p><strong>Jira ticket created:</strong> <a href="' + escapeHtml(result.url) + '">' + escapeHtml(result.key) + '</a></p>';
+      await API.addZdInternalNote(cfg, sourceInfo.ticketId, html);
+      console.log('[BG] Added ZD internal note linking to on-prem ' + result.key);
+    } else {
+      console.log('[BG] ZD already has link note for ' + result.key + ', skipping');
+    }
+    // Link on new on-prem Jira ticket → source ZD ticket (remote link in Links section)
+    const onPremSourceUrl = zdUrl + '/agent/tickets/' + sourceInfo.ticketId;
+    await addOnPremRemoteLinkIfMissing(cfg, result.key, onPremSourceUrl, 'ZD-' + sourceInfo.ticketId, 'Zendesk');
     return true;
 
   } else if (sourceInfo.source === 'jira' && target === 'zendesk') {
@@ -589,7 +692,7 @@ async function doCrossLink(cfg, target, result, sourceInfo) {
   return false;
 }
 
-/** Add a Jira remote link only if one with the same URL doesn't already exist */
+/** Add a Jira Cloud remote link only if one with the same URL doesn't already exist */
 async function addRemoteLinkIfMissing(cfg, issueKey, url, title, appName) {
   try {
     const existing = await API.getJiraRemoteLinks(cfg, issueKey);
@@ -600,6 +703,18 @@ async function addRemoteLinkIfMissing(cfg, issueKey, url, title, appName) {
     console.warn('[BG] Could not read remote links for ' + issueKey + ':', e);
   }
   await API.addJiraRemoteLink(cfg, issueKey, url, title, appName);
+}
+
+/** Add an on-prem Jira remote link only if one with the same URL doesn't already exist */
+async function addOnPremRemoteLinkIfMissing(cfg, issueKey, url, title, appName) {
+  try {
+    const existing = await API.getOnPremJiraRemoteLinks(cfg, issueKey);
+    const alreadyLinked = (existing || []).some(l => l.object && l.object.url === url);
+    if (alreadyLinked) return;
+  } catch (e) {
+    console.warn('[BG] Could not read on-prem remote links for ' + issueKey + ':', e);
+  }
+  await API.addOnPremJiraRemoteLink(cfg, issueKey, url, title, appName);
 }
 
 async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
@@ -630,6 +745,17 @@ async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
     const os = source.originalSubmittal || source.description || '';
     if (os) updateFields.originalSubmittal = os;
     await API.updateJiraTicket(cfg, targetKey, updateFields);
+    stats.fieldsUpdated = true;
+  } else if (source && targetSystem === 'jira-onprem') {
+    console.log('[BG] Updating fields on on-prem Jira ' + targetKey);
+    const updateFields = {
+      summary: '[ZD-' + sourceInfo.ticketId + '] ' + source.summary,
+      description: source.description || source.summary,
+      priority: source.priorityJira || 'Medium'
+    };
+    const os = source.originalSubmittal || source.description || '';
+    if (os) updateFields.originalSubmittal = os;
+    await API.updateOnPremJiraTicket(cfg, targetKey, updateFields);
     stats.fieldsUpdated = true;
   } else if (source && targetSystem === 'zendesk') {
     console.log('[BG] Updating fields on ZD-' + zdTargetId);
@@ -665,8 +791,10 @@ async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
       const m = html.match(/<!-- vtm-sync:comment-(\S+?) -->/);
       if (m) alreadySyncedIds.add(m[1]);
     }
-  } else if (targetSystem === 'jira') {
-    const targetComments = await API.fetchJiraComments(cfg, targetKey);
+  } else if (targetSystem === 'jira' || targetSystem === 'jira-onprem') {
+    const targetComments = targetSystem === 'jira'
+      ? await API.fetchJiraComments(cfg, targetKey)
+      : await API.fetchOnPremJiraComments(cfg, targetKey);
     for (const tc of targetComments) {
       const txt = tc.body || '';
       targetBodies.push(txt);
@@ -695,14 +823,18 @@ async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
     newComments.length + ' new to copy');
 
   for (const c of newComments) {
-    if (targetSystem === 'jira') {
+    if (targetSystem === 'jira' || targetSystem === 'jira-onprem') {
       // Resolve ZD user names if needed
       if (c.author_id && !c.author) {
         c.author = await API.resolveZdUserName(cfg, c.author_id) || ('User #' + c.author_id);
       }
       const prefix = c.author ? ('*' + c.author + '* (' + (c.created || '') + '):\n') : '';
       const marker = '\n{color:#ffffff}{vtm-sync:comment-' + c.id + '}{color}';
-      await API.addJiraComment(cfg, targetKey, prefix + (c.body || '') + marker);
+      if (targetSystem === 'jira') {
+        await API.addJiraComment(cfg, targetKey, prefix + (c.body || '') + marker);
+      } else {
+        await API.addOnPremJiraComment(cfg, targetKey, prefix + (c.body || '') + marker);
+      }
     } else {
       const prefix = c.author ? '<strong>' + escapeHtml(c.author) + '</strong> (' + escapeHtml(c.created || '') + '):<br>' : '';
       const body = sourceInfo.source === 'jira' ? jiraWikiToHtml(c.body || '') : escapeHtml(c.body || '');
@@ -728,6 +860,9 @@ async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
   if (targetSystem === 'jira') {
     const targetAtts = await API.fetchJiraAttachments(cfg, targetKey);
     targetAtts.forEach(a => existingNames.add(a.filename));
+  } else if (targetSystem === 'jira-onprem') {
+    const targetAtts = await API.fetchOnPremJiraAttachments(cfg, targetKey);
+    targetAtts.forEach(a => existingNames.add(a.filename));
   } else {
     const targetAllComments = await API.fetchZdComments(cfg, zdTargetId);
     for (const c of targetAllComments) {
@@ -752,6 +887,8 @@ async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
       }
       if (targetSystem === 'jira') {
         await API.uploadJiraAttachment(cfg, targetKey, a.filename, blob);
+      } else if (targetSystem === 'jira-onprem') {
+        await API.uploadOnPremJiraAttachment(cfg, targetKey, a.filename, blob);
       } else {
         const upload = await API.uploadZdAttachment(cfg, a.filename, blob);
         uploadTokens.push(upload.token);

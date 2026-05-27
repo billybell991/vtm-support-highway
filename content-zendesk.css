@@ -1,14 +1,13 @@
-/* content-zendesk.css — Styles for the injected Clone to Jira button and toast */
+/* content-zendesk.css — Styles for the injected clone buttons and toast */
 
 .vtm-zd-clone-wrap {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   margin-left: 8px;
 }
 
 .vtm-zd-clone-btn {
-  background: #0052cc !important;
-  color: #fff !important;
   border: none !important;
   border-radius: 4px !important;
   padding: 6px 14px !important;
@@ -22,17 +21,32 @@
   transition: background 0.15s !important;
   line-height: 1.4 !important;
   white-space: nowrap !important;
+  color: #fff !important;
 }
-.vtm-zd-clone-btn:hover {
+
+/* Clone to Support Defect — Jira Cloud blue */
+.vtm-btn-defect {
+  background: #0052cc !important;
+}
+.vtm-btn-defect:hover {
   background: #0065ff !important;
 }
+
+/* Clone to Tech Request — on-prem teal */
+.vtm-btn-tech {
+  background: #0e7c6a !important;
+}
+.vtm-btn-tech:hover {
+  background: #11997f !important;
+}
+
 .vtm-zd-clone-btn.vtm-busy {
   opacity: 0.7 !important;
   pointer-events: none !important;
 }
 
-/* Floating position (fallback if header injection fails) */
-.vtm-zd-floating {
+/* Floating fallback — positions the whole two-button group */
+.vtm-zd-floating-wrap {
   position: fixed !important;
   top: 12px !important;
   right: 12px !important;
@@ -78,15 +92,6 @@
   font-weight: 600;
   text-decoration: underline;
 }
-.vtm-toast-info {
-  background: #0052cc;
-  color: #fff;
-}
-.vtm-toast-done {
-  background: #1b5e20;
-  color: #fff;
-}
-.vtm-toast-error {
-  background: #c62828;
-  color: #fff;
-}
+.vtm-toast-info  { background: #0052cc; color: #fff; }
+.vtm-toast-done  { background: #1b5e20; color: #fff; }
+.vtm-toast-error { background: #c62828; color: #fff; }

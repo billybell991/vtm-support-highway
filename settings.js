@@ -3,15 +3,19 @@
  */
 
 const Settings = (() => {
-  const STORAGE_KEY = 'vtm_highway_config_v2';
+  const STORAGE_KEY = 'vtm_highway_config_v3';
 
   const DEFAULTS = {
-    jiraUrl: 'http://atlassian.versaterm.com:8080',
-    jiraUser: '',
-    jiraPass: '',
+    jiraUrl: 'https://versaterminc.atlassian.net',
+    jiraUser: '',   // Jira Cloud: each user enters their own email address
+    jiraPass: '',   // Jira Cloud: each user enters their own API token (https://id.atlassian.com/manage-profile/security/api-tokens)
+    onPremJiraUrl: 'http://atlassian.versaterm.com:8080',
+    onPremJiraUser: '',
+    onPremJiraPass: '',
+    onPremJiraTechProject: 'SUP',
     zdUrl: 'https://versatermhelp.zendesk.com',
-    zdEmail: '',
-    zdToken: '',
+    zdEmail: '',    // each user enters their own email address
+    zdToken: '',    // uses browser session (cookie) auth — no token needed
     zdBrandId: '',
     zdAssigneeEmail: '',
     ahaUrl: '',
@@ -84,6 +88,10 @@ const Settings = (() => {
     document.getElementById('cfg-jira-url').value = cfg.jiraUrl;
     document.getElementById('cfg-jira-user').value = cfg.jiraUser;
     document.getElementById('cfg-jira-pass').value = cfg.jiraPass;
+    document.getElementById('cfg-onprem-jira-url').value = cfg.onPremJiraUrl;
+    document.getElementById('cfg-onprem-jira-user').value = cfg.onPremJiraUser;
+    document.getElementById('cfg-onprem-jira-pass').value = cfg.onPremJiraPass;
+    document.getElementById('cfg-onprem-jira-tech-project').value = cfg.onPremJiraTechProject;
     document.getElementById('cfg-zd-url').value = cfg.zdUrl;
     document.getElementById('cfg-zd-email').value = cfg.zdEmail;
     document.getElementById('cfg-zd-token').value = cfg.zdToken;
@@ -99,6 +107,10 @@ const Settings = (() => {
       jiraUrl: document.getElementById('cfg-jira-url').value.trim(),
       jiraUser: document.getElementById('cfg-jira-user').value.trim(),
       jiraPass: document.getElementById('cfg-jira-pass').value,
+      onPremJiraUrl: document.getElementById('cfg-onprem-jira-url').value.trim(),
+      onPremJiraUser: document.getElementById('cfg-onprem-jira-user').value.trim(),
+      onPremJiraPass: document.getElementById('cfg-onprem-jira-pass').value,
+      onPremJiraTechProject: document.getElementById('cfg-onprem-jira-tech-project').value.trim(),
       zdUrl: document.getElementById('cfg-zd-url').value.trim(),
       zdEmail: document.getElementById('cfg-zd-email').value.trim(),
       zdToken: document.getElementById('cfg-zd-token').value,
@@ -112,9 +124,15 @@ const Settings = (() => {
   /** Check if minimum config is present for a given source */
   function isConfigured(cfg, source) {
     if (source === 'jira') {
-      // Only URL required — user/pass optional if logged into Jira in browser
-      const ok = !!cfg.jiraUrl;
-      if (!ok) console.warn('[isConfigured:jira] FAIL — url:', !!cfg.jiraUrl);
+      // Jira Cloud requires email + API token (no session-cookie auth)
+      const ok = !!(cfg.jiraUrl && cfg.jiraUser && cfg.jiraPass);
+      if (!ok) console.warn('[isConfigured:jira] FAIL — url:', !!cfg.jiraUrl, 'user:', !!cfg.jiraUser, 'token:', !!cfg.jiraPass);
+      return ok;
+    }
+    if (source === 'jira-onprem') {
+      // Accept either username+password OR PAT-only (password field holds the token).
+      const ok = !!(cfg.onPremJiraUrl && cfg.onPremJiraPass);
+      if (!ok) console.warn('[isConfigured:jira-onprem] FAIL — url:', !!cfg.onPremJiraUrl, 'user:', !!cfg.onPremJiraUser, 'pass/PAT:', !!cfg.onPremJiraPass);
       return ok;
     }
     if (source === 'zendesk') {

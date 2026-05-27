@@ -1,6 +1,9 @@
 /**
- * api.js — Direct REST API clients for Jira Server, Zendesk, and Aha.
+ * api.js — Direct REST API clients for Jira Cloud, Zendesk, and Aha.
  * No backend needed. Credentials come from chrome.storage.local via Settings.
+ *
+ * Jira Cloud auth: Basic with email:api_token (base64-encoded).
+ * Jira Cloud does NOT support session-cookie auth from extensions.
  */
 
 const API = (() => {
@@ -8,10 +11,38 @@ const API = (() => {
   function jiraHeaders(cfg) {
     const headers = { 'Accept': 'application/json' };
     if (cfg.jiraUser && cfg.jiraPass) {
+      // Jira Cloud: Basic with email:api_token. Jira Server/DC: Basic with username:password.
       headers['Authorization'] = 'Basic ' + btoa(cfg.jiraUser + ':' + cfg.jiraPass);
+    } else if (cfg.jiraPass) {
+      // Jira Server/DC Personal Access Token — no username, send as Bearer.
+      headers['Authorization'] = 'Bearer ' + cfg.jiraPass;
     }
-    // If no user/pass, rely on browser cookies (active Jira session)
     return headers;
+  }
+
+  /** Build a richer error string for Jira non-OK responses, including
+   *  Server/DC auth-denial reasons (CAPTCHA lockout, etc.) when present. */
+  function jiraErrorDetail(resp, bodyText) {
+    const reason = resp.headers.get('X-Authentication-Denied-Reason') ||
+                   resp.headers.get('X-Seraph-LoginReason') || '';
+    let detail = resp.statusText || '';
+    if (bodyText) {
+      try {
+        const j = JSON.parse(bodyText);
+        detail = j.errorMessages && j.errorMessages.length ? j.errorMessages.join('; ')
+               : (j.errors ? JSON.stringify(j.errors) : (j.message || bodyText));
+      } catch (_) { detail = bodyText; }
+    }
+    if (resp.status === 401) {
+      if (/CAPTCHA/i.test(reason)) {
+        detail = 'Jira CAPTCHA lockout — open ' + resp.url.split('/rest/')[0] + ' in your browser, log in & solve the CAPTCHA, then retry.';
+      } else if (reason) {
+        detail = 'Auth denied (' + reason + ') — check on-prem Jira credentials / PAT in Settings.';
+      } else if (!detail || detail === 'Unauthorized') {
+        detail = 'Unauthorized — check on-prem Jira username/password (or Personal Access Token) in Settings.';
+      }
+    }
+    return detail;
   }
 
   function zdHeaders(cfg) {
@@ -69,13 +100,71 @@ const API = (() => {
   const ZD_TO_JIRA_PRIORITY = { urgent: 'Critical', high: 'High', normal: 'Medium', low: 'Low' };
   const JIRA_TO_ZD_PRIORITY = { Blocker: 'urgent', Critical: 'urgent', Highest: 'urgent', High: 'high', Medium: 'normal', Low: 'low', Lowest: 'low' };
 
+  /**
+   * Resolve a requested Jira priority name against the project's actual allowed
+   * priority values (which can be renamed/restricted by admins via priority schemes).
+   * Returns the wire-format object to send (preferring {id} when available) or
+   * null if no reasonable match exists — in which case the caller should omit
+   * the priority field entirely so Jira applies the scheme default.
+   */
+  function resolveJiraPriority(meta, requested) {
+    const allowed = (meta && meta.priority && meta.priority.allowedValues) || [];
+    if (!allowed.length) {
+      // Field not on screen, or admin returned no list — pass name through unvalidated
+      return requested ? { name: requested } : null;
+    }
+    const want = String(requested || 'Medium').toLowerCase().trim();
+
+    // Common cross-scheme synonyms so renamed/rebranded schemes still work
+    const SYNONYMS = {
+      blocker:  ['blocker', 'highest', 'critical', 'urgent', 'p1', 'severity 1', 'sev 1'],
+      highest:  ['highest', 'blocker', 'critical', 'urgent', 'p1', 'severity 1', 'sev 1'],
+      critical: ['critical', 'highest', 'blocker', 'urgent', 'p1', 'severity 1', 'sev 1'],
+      urgent:   ['urgent', 'critical', 'highest', 'blocker', 'p1'],
+      high:     ['high', 'major', 'p2', 'severity 2', 'sev 2'],
+      medium:   ['medium', 'normal', 'moderate', 'standard', 'p3', 'severity 3', 'sev 3'],
+      normal:   ['normal', 'medium', 'moderate', 'standard', 'p3', 'severity 3', 'sev 3'],
+      low:      ['low', 'minor', 'p4', 'severity 4', 'sev 4'],
+      lowest:   ['lowest', 'trivial', 'low', 'minor', 'p5', 'severity 5', 'sev 5'],
+      trivial:  ['trivial', 'lowest', 'low', 'minor', 'p5']
+    };
+
+    // 1) Exact (case-insensitive) match
+    let hit = allowed.find(a => a.name && a.name.toLowerCase() === want);
+    // 2) Synonym match in either direction
+    if (!hit) {
+      const wantSyns = SYNONYMS[want] || [want];
+      hit = allowed.find(a => {
+        const an = a.name && a.name.toLowerCase();
+        if (!an) return false;
+        if (wantSyns.includes(an)) return true;
+        const aSyns = SYNONYMS[an] || [];
+        return aSyns.includes(want);
+      });
+    }
+    // 3) Sensible default: pick the middle of the list when nothing matches
+    if (!hit && allowed.length) {
+      const mid = allowed[Math.floor(allowed.length / 2)];
+      console.warn('[API] Priority "' + requested + '" not in allowed list ['
+        + allowed.map(a => a.name).join(', ') + '] — falling back to "' + mid.name + '"');
+      hit = mid;
+    }
+    if (!hit) return null;
+    // Prefer id when available (more robust against rename) — fall back to name
+    return hit.id ? { id: String(hit.id) } : { name: hit.name };
+  }
+
+
   // ────── JIRA SERVER ──────
   async function jiraGet(cfg, path) {
     const resp = await fetch(cfg.jiraUrl.replace(/\/+$/, '') + path, {
-      headers: jiraHeaders(cfg),
-      credentials: 'include'  // send cookies for active Jira session
+      headers: jiraHeaders(cfg)
     });
-    if (!resp.ok) throw new Error('Jira GET ' + path + ' → ' + resp.status + ' ' + resp.statusText);
+    if (!resp.ok) {
+      let text = '';
+      try { text = await resp.text(); } catch (_) {}
+      throw new Error('Jira GET ' + path + ' → ' + resp.status + ': ' + jiraErrorDetail(resp, text));
+    }
     return resp.json();
   }
 
@@ -83,14 +172,11 @@ const API = (() => {
     const resp = await fetch(cfg.jiraUrl.replace(/\/+$/, '') + path, {
       method: 'POST',
       headers: { ...jiraHeaders(cfg), 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify(body)
     });
     if (!resp.ok) {
       const text = await resp.text();
-      let detail = resp.statusText;
-      try { detail = JSON.parse(text).errors || JSON.parse(text).errorMessages || text; } catch (_) { detail = text; }
-      throw new Error('Jira POST ' + path + ' → ' + resp.status + ': ' + JSON.stringify(detail));
+      throw new Error('Jira POST ' + path + ' → ' + resp.status + ': ' + jiraErrorDetail(resp, text));
     }
     return resp.json();
   }
@@ -99,34 +185,40 @@ const API = (() => {
     const resp = await fetch(cfg.jiraUrl.replace(/\/+$/, '') + path, {
       method: 'PUT',
       headers: { ...jiraHeaders(cfg), 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify(body)
     });
     if (!resp.ok) {
       const text = await resp.text();
-      let detail = resp.statusText;
-      try { detail = JSON.parse(text).errors || JSON.parse(text).errorMessages || text; } catch (_) { detail = text; }
-      throw new Error('Jira PUT ' + path + ' → ' + resp.status + ': ' + JSON.stringify(detail));
+      throw new Error('Jira PUT ' + path + ' → ' + resp.status + ': ' + jiraErrorDetail(resp, text));
     }
     // Jira PUT /issue returns 204 No Content on success
     if (resp.status === 204) return {};
     return resp.json();
   }
 
-  /** Fetch a Jira issue by key (e.g. SUP-12345) */
+  /** Fetch a Jira issue by key (e.g. CRMS-37) */
   async function fetchJiraTicket(cfg, key) {
     const data = await jiraGet(cfg, '/rest/api/2/issue/' + encodeURIComponent(key) + '?expand=renderedFields');
     const f = data.fields || {};
+    // Client/Contact are option arrays: [{value:"Saskatoon",...}]
+    const clientVal = (f.customfield_10844 || []).map(v => v.value).join(', ');
+    const contactVal = (f.customfield_10845 || []).map(v => v.value).join(', ');
     return {
       source: 'jira',
       key: data.key,
       id: data.id,
       summary: f.summary || '',
       description: f.description || '',
-      originalSubmittal: (f.customfield_11106 || ''),
+      originalSubmittal: (f.customfield_10843 || ''),
+      stepsToReproduce: (f.customfield_10847 || ''),
+      fixBuild: (f.customfield_10842 || ''),
+      client: clientVal,
+      contact: contactVal,
+      severity: (f.customfield_10505 && f.customfield_10505.value) || 'Normal',
+      component: (f.customfield_10809 && f.customfield_10809.value) || '',
       priority: (f.priority && f.priority.name) || 'Medium',
       priorityZd: JIRA_TO_ZD_PRIORITY[(f.priority && f.priority.name)] || 'normal',
-      issueType: (f.issuetype && f.issuetype.name) || 'Bug',
+      issueType: (f.issuetype && f.issuetype.name) || 'Support Defect',
       status: (f.status && f.status.name) || '',
       project: (f.project && f.project.key) || '',
       labels: (f.labels || []).join(', '),
@@ -138,18 +230,44 @@ const API = (() => {
     };
   }
 
-  /** Fetch the create-screen field keys for a project + issue type */
+  /** Fetch the create-screen field keys for a project + issue type.
+   * Tries the Jira Cloud paginated endpoint first; falls back to the legacy
+   * expand-based endpoint for compatibility.
+   */
   async function fetchJiraCreateMeta(cfg, projectKey, issueTypeName) {
+    // Step 1: find the issue type ID by name
+    try {
+      const typesData = await jiraGet(cfg,
+        '/rest/api/2/issue/createmeta/' + encodeURIComponent(projectKey) + '/issuetypes?maxResults=50');
+      const types = typesData.values || typesData.issueTypes || [];
+      const itype = types.find(t => t.name === issueTypeName) || types[0];
+      if (itype && itype.id) {
+        // Step 2: fetch fields for this issue type
+        const fieldsData = await jiraGet(cfg,
+          '/rest/api/2/issue/createmeta/' + encodeURIComponent(projectKey)
+          + '/issuetypes/' + encodeURIComponent(itype.id) + '?maxResults=200');
+        const fieldArr = fieldsData.values || fieldsData.fields || [];
+        const fieldMap = {};
+        for (const f of fieldArr) { if (f.fieldId) fieldMap[f.fieldId] = f; }
+        console.log('[API] createMeta (Cloud) for ' + projectKey + '/' + itype.name + ' — fields:', Object.keys(fieldMap).join(', '));
+        return { fields: fieldMap, resolvedIssueType: itype.name };
+      }
+    } catch (e) {
+      console.warn('[API] Cloud createMeta endpoint failed, falling back:', e.message);
+    }
+
+    // Fallback: legacy endpoint (Jira Server / older Cloud)
     const path = '/rest/api/2/issue/createmeta'
       + '?projectKeys=' + encodeURIComponent(projectKey)
       + '&issuetypeNames=' + encodeURIComponent(issueTypeName)
       + '&expand=projects.issuetypes.fields';
     const data = await jiraGet(cfg, path);
     const proj = (data.projects || [])[0];
-    const itype = proj && (proj.issuetypes || [])[0];
-    const fieldMap = (itype && itype.fields) || {};
-    console.log('[API] createMeta for ' + projectKey + '/' + issueTypeName + ' — fields on screen:', Object.keys(fieldMap).join(', '));
-    return fieldMap; // keys are field IDs, values have { required, name, schema, allowedValues, ... }
+    const itype2 = proj && (proj.issuetypes || [])[0];
+    const fieldMap = (itype2 && itype2.fields) || {};
+    const resolvedName = (itype2 && itype2.name) || issueTypeName;
+    console.log('[API] createMeta (legacy) for ' + projectKey + '/' + resolvedName + ' — fields:', Object.keys(fieldMap).join(', '));
+    return { fields: fieldMap, resolvedIssueType: resolvedName };
   }
 
   /** Create a Jira issue */
@@ -157,18 +275,70 @@ const API = (() => {
     console.log('[API] createJiraTicket fields:', JSON.stringify(fields));
 
     // Query create-meta to know exactly which fields are on the screen
-    const meta = await fetchJiraCreateMeta(cfg, fields.project, fields.issueType || 'Support');
+    const metaResult = await fetchJiraCreateMeta(cfg, fields.project, fields.issueType || 'Support Defect');
+    const meta = metaResult.fields;
+    const resolvedIssueType = metaResult.resolvedIssueType || fields.issueType || 'Support Defect';
     const onScreen = (fid) => fid in meta;
+
+    /** Find the best matching allowed value for an option field (case-insensitive, partial match).
+     *  Returns the exact string to send, or null if nothing matches. */
+    function matchOption(fieldId, input) {
+      const allowed = (meta[fieldId] && meta[fieldId].allowedValues) || [];
+      if (!allowed.length) return input; // no list to validate against — pass through
+      const lower = input.toLowerCase();
+      // 1. Exact match
+      let hit = allowed.find(a => a.value.toLowerCase() === lower);
+      // 2. Input contains the allowed value (e.g. "Ottawa Police" matches "Ottawa")
+      if (!hit) hit = allowed.find(a => lower.includes(a.value.toLowerCase()) && a.value.length > 3);
+      // 3. Allowed value contains the input
+      if (!hit) hit = allowed.find(a => a.value.toLowerCase().includes(lower) && lower.length > 3);
+      if (hit) return hit.value;
+      console.warn('[API] No allowed match for', fieldId, '=', JSON.stringify(input), '— skipping field');
+      return null;
+    }
 
     const body = {
       fields: {
         project: { key: fields.project },
         summary: fields.summary,
         description: fields.description || '',
-        issuetype: { name: fields.issueType || 'Support' },
-        priority: { name: fields.priority || 'Medium' }
+        issuetype: { name: resolvedIssueType }
       }
     };
+    // Priority — only set if we can resolve to an allowed value for this scheme.
+    // Omitting it lets Jira apply the project's default priority instead of 400-ing.
+    const pri = resolveJiraPriority(meta, fields.priority);
+    if (pri) body.fields.priority = pri;
+    else console.warn('[API] Priority field omitted (not on screen or unresolvable)');
+
+    // Helper: find a field in the create meta by its display name (handles different IDs per Jira instance)
+    function findByName(displayName) {
+      const lower = displayName.toLowerCase().trim();
+      const entry = Object.entries(meta).find(([, f]) => f.name && f.name.toLowerCase().trim() === lower);
+      return entry ? entry[0] : null;
+    }
+
+    // Helper: set a field by ID using the schema to determine the correct wire format
+    function setOptionField(fid, rawInputs) {
+      const inputs = Array.isArray(rawInputs) ? rawInputs
+        : typeof rawInputs === 'string' ? rawInputs.split(',').map(s => s.trim()).filter(Boolean)
+        : [rawInputs].filter(Boolean);
+      const schema = (meta[fid] && meta[fid].schema) || {};
+      const allowed = (meta[fid] && meta[fid].allowedValues) || [];
+      const matched = allowed.length ? inputs.map(v => matchOption(fid, v)).filter(Boolean) : inputs;
+      if (!matched.length) return;
+      let value;
+      if (schema.type === 'array') {
+        value = schema.items === 'option' ? matched.map(v => ({ value: v })) : matched;
+      } else if (schema.type === 'option') {
+        value = { value: matched[0] };
+      } else {
+        // string, textarea, any other type — plain string
+        value = matched[0];
+      }
+      body.fields[fid] = value;
+      console.log('[API] setOptionField', fid, JSON.stringify(schema), '→', JSON.stringify(value));
+    }
 
     // Optional fields — only include if they're on the create screen
     if (fields.components && onScreen('components')) {
@@ -177,28 +347,75 @@ const API = (() => {
         : [fields.components].filter(Boolean);
       body.fields.components = names.map(n => ({ name: n }));
     }
-    if (fields.originalSubmittal && onScreen('customfield_11106')) {
-      body.fields.customfield_11106 = fields.originalSubmittal;
+    // Original Submittal (Cloud: customfield_10843, On-Prem: customfield_11106)
+    if (fields.originalSubmittal) {
+      const fid = findByName('original submittal') || (onScreen('customfield_10843') ? 'customfield_10843' : null);
+      if (fid) body.fields[fid] = fields.originalSubmittal;
     }
-    if (fields.client && onScreen('customfield_10000')) {
-      body.fields.customfield_10000 = Array.isArray(fields.client)
-        ? fields.client : [fields.client];
+    // Client (Cloud: customfield_10844 option array, On-Prem: customfield_10000)
+    if (fields.client) {
+      const fid = findByName('client') || (onScreen('customfield_10844') ? 'customfield_10844' : null);
+      if (fid) setOptionField(fid, fields.client);
     }
-    if (fields.contact && onScreen('customfield_10001')) {
-      body.fields.customfield_10001 = fields.contact;
+    // Contact (Cloud: customfield_10845 option array)
+    if (fields.contact) {
+      const fid = findByName('contact') || (onScreen('customfield_10845') ? 'customfield_10845' : null);
+      if (fid) setOptionField(fid, fields.contact);
     }
-    if (fields.severity && onScreen('customfield_10506')) {
-      body.fields.customfield_10506 = { value: fields.severity };
+    // Severity (Cloud: customfield_10505)
+    if (fields.severity) {
+      const fid = findByName('severity') || (onScreen('customfield_10505') ? 'customfield_10505' : null);
+      if (fid) setOptionField(fid, fields.severity);
     }
-    if (fields.refNumber && onScreen('customfield_10904')) {
-      body.fields.customfield_10904 = fields.refNumber;
+    // Component custom field (Cloud: customfield_10809 — feature area e.g. BOLO)
+    if (fields.component && onScreen('customfield_10809')) {
+      const cv = matchOption('customfield_10809', fields.component);
+      if (cv) body.fields.customfield_10809 = { value: cv };
     }
-    if (fields.product && onScreen('customfield_11105')) {
-      body.fields.customfield_11105 = { value: fields.product };
+    // Fix Build (Cloud: customfield_10842)
+    if (fields.fixBuild) {
+      const fid = findByName('fix build') || (onScreen('customfield_10842') ? 'customfield_10842' : null);
+      if (fid) body.fields[fid] = fields.fixBuild;
+    }
+    // Steps to Reproduce (Cloud: customfield_10847)
+    if (fields.stepsToReproduce) {
+      const fid = findByName('steps to reproduce') || (onScreen('customfield_10847') ? 'customfield_10847' : null);
+      if (fid) body.fields[fid] = fields.stepsToReproduce;
+    }
+    // Product (On-Prem: customfield_11105 — option or text)
+    if (fields.product) {
+      const fid = findByName('product');
+      if (fid) setOptionField(fid, fields.product);
+    }
+    // Service Category (field ID varies per Jira instance)
+    if (fields.serviceCategory) {
+      const fid = findByName('service category');
+      if (fid) {
+        const sv = matchOption(fid, fields.serviceCategory);
+        if (sv) body.fields[fid] = { value: sv };
+        console.log('[API] Service Category field:', fid, '=', sv || '(no match)');
+      } else {
+        console.warn('[API] Service Category field not found in create meta');
+      }
     }
 
     console.log('[API] Jira POST body:', JSON.stringify(body));
-    const data = await jiraPost(cfg, '/rest/api/2/issue', body);
+    let data;
+    try {
+      data = await jiraPost(cfg, '/rest/api/2/issue', body);
+    } catch (e) {
+      // If Jira rejects specifically because of priority (renamed scheme, removed value,
+      // or priority not on the create screen at all), retry once without it.
+      const msg = String(e && e.message || '');
+      if (body.fields.priority && /priority/i.test(msg)) {
+        console.warn('[API] Jira create failed with priority error — retrying without priority. Original error:', msg);
+        const retryBody = { fields: { ...body.fields } };
+        delete retryBody.fields.priority;
+        data = await jiraPost(cfg, '/rest/api/2/issue', retryBody);
+      } else {
+        throw e;
+      }
+    }
     return {
       key: data.key,
       id: data.id,
@@ -211,7 +428,19 @@ const API = (() => {
     const body = { fields: {} };
     if (fields.summary !== undefined) body.fields.summary = fields.summary;
     if (fields.description !== undefined) body.fields.description = fields.description;
-    if (fields.priority) body.fields.priority = { name: fields.priority };
+    if (fields.priority) {
+      // Resolve against the live issue's edit-meta priorities so renames don't break updates.
+      try {
+        const edit = await jiraGet(cfg, '/rest/api/2/issue/' + encodeURIComponent(issueKey) + '/editmeta');
+        const editMeta = (edit && edit.fields) || {};
+        const pri = resolveJiraPriority(editMeta, fields.priority);
+        if (pri) body.fields.priority = pri;
+        else console.warn('[API] updateJiraTicket: priority "' + fields.priority + '" unresolvable, leaving unchanged');
+      } catch (e) {
+        // Fall back to name if editmeta isn't accessible
+        body.fields.priority = { name: fields.priority };
+      }
+    }
     if (fields.components) {
       const names = typeof fields.components === 'string'
         ? fields.components.split(',').map(s => s.trim()).filter(Boolean)
@@ -219,7 +448,10 @@ const API = (() => {
       body.fields.components = names.map(n => ({ name: n }));
     }
     if (fields.originalSubmittal !== undefined) {
-      body.fields.customfield_11106 = fields.originalSubmittal;
+      body.fields.customfield_10843 = fields.originalSubmittal;
+    }
+    if (fields.stepsToReproduce !== undefined) {
+      body.fields.customfield_10847 = fields.stepsToReproduce;
     }
     return jiraPut(cfg, '/rest/api/2/issue/' + encodeURIComponent(issueKey), body);
   }
@@ -328,6 +560,25 @@ const API = (() => {
     return {};
   }
 
+  /** Cache of ZD ticket field info (fetched once per session) */
+  let _zdFieldCache = null;
+  async function getZdProductFieldInfo(cfg) {
+    if (_zdFieldCache !== null) return _zdFieldCache;
+    _zdFieldCache = { productId: null, options: {} };
+    try {
+      const data = await zdGet(cfg, '/api/v2/ticket_fields.json');
+      const fields = data.ticket_fields || [];
+      const productField = fields.find(f => f.title && f.title.toLowerCase().includes('product'));
+      if (productField) {
+        _zdFieldCache.productId = productField.id;
+        for (const opt of (productField.custom_field_options || [])) {
+          _zdFieldCache.options[opt.value] = opt.name;
+        }
+      }
+    } catch (e) { /* optional */ }
+    return _zdFieldCache;
+  }
+
   /** Fetch a Zendesk ticket by ID (enriched with requester + org) */
   async function fetchZdTicket(cfg, ticketId) {
     const data = await zdGet(cfg, '/api/v2/tickets/' + encodeURIComponent(ticketId) + '.json');
@@ -350,6 +601,16 @@ const API = (() => {
       } catch (e) { /* requester fetch optional */ }
     }
 
+    // Extract Product from ZD custom fields
+    let product = '';
+    try {
+      const pInfo = await getZdProductFieldInfo(cfg);
+      if (pInfo.productId) {
+        const cf = (t.custom_fields || []).find(f => f.id === pInfo.productId);
+        if (cf && cf.value) product = pInfo.options[cf.value] || cf.value;
+      }
+    } catch (e) { /* optional */ }
+
     return {
       source: 'zendesk',
       id: t.id,
@@ -364,6 +625,7 @@ const API = (() => {
       requesterName: requesterName,
       requesterEmail: requesterEmail,
       organization: orgName,
+      product: product,
       url: cfg.zdUrl.replace(/\/+$/, '') + '/agent/tickets/' + t.id,
       raw: t
     };
@@ -560,6 +822,43 @@ const API = (() => {
     return null;
   }
 
+  // ────── ON-PREM JIRA (wrappers — re-use existing Jira functions with different config keys) ──────
+
+  /** Build a config object that maps on-prem credentials onto the standard jira* keys */
+  function onPremCfg(cfg) {
+    return { ...cfg, jiraUrl: cfg.onPremJiraUrl || '', jiraUser: cfg.onPremJiraUser || '', jiraPass: cfg.onPremJiraPass || '' };
+  }
+
+  async function fetchOnPremJiraTicket(cfg, key)                   { return fetchJiraTicket(onPremCfg(cfg), key); }
+  async function createOnPremJiraTicket(cfg, fields)               { return createJiraTicket(onPremCfg(cfg), fields); }
+  async function updateOnPremJiraTicket(cfg, key, fields)          { return updateJiraTicket(onPremCfg(cfg), key, fields); }
+  async function addOnPremJiraComment(cfg, key, body)              { return addJiraComment(onPremCfg(cfg), key, body); }
+  async function addOnPremJiraRemoteLink(cfg, key, url, title, app){ return addJiraRemoteLink(onPremCfg(cfg), key, url, title, app); }
+  async function getOnPremJiraRemoteLinks(cfg, key)                { return getJiraRemoteLinks(onPremCfg(cfg), key); }
+  async function fetchOnPremJiraComponents(cfg, pk)                { return fetchJiraComponents(onPremCfg(cfg), pk); }
+  async function fetchOnPremJiraIssueTypes(cfg, pk)                { return fetchJiraIssueTypes(onPremCfg(cfg), pk); }
+  async function fetchOnPremJiraCreateMeta(cfg, pk, it)            { return fetchJiraCreateMeta(onPremCfg(cfg), pk, it); }
+  async function fetchOnPremJiraComments(cfg, key)                 { return fetchJiraComments(onPremCfg(cfg), key); }
+  async function fetchOnPremJiraAttachments(cfg, key)              { return fetchJiraAttachments(onPremCfg(cfg), key); }
+  async function downloadOnPremJiraAttachment(cfg, url)            { return downloadJiraAttachment(onPremCfg(cfg), url); }
+  async function uploadOnPremJiraAttachment(cfg, key, fn, blob)    { return uploadJiraAttachment(onPremCfg(cfg), key, fn, blob); }
+
+  async function findExistingOnPremJiraClone(cfg, searchKey) {
+    const oc = onPremCfg(cfg);
+    try {
+      const jql = 'summary ~ "\\[' + searchKey + '\\]" ORDER BY created DESC';
+      console.log('[API] On-prem Jira clone search JQL:', jql);
+      const data = await jiraGet(oc, '/rest/api/2/search?jql=' + encodeURIComponent(jql) + '&maxResults=1&fields=summary');
+      if (data.issues && data.issues.length > 0) {
+        const issue = data.issues[0];
+        return { key: issue.key, id: issue.id, url: oc.jiraUrl.replace(/\/+$/, '') + '/browse/' + issue.key };
+      }
+    } catch (e) {
+      console.error('[API] On-prem Jira clone search failed:', e);
+    }
+    return null;
+  }
+
   // ────── AHA (Phase 2 placeholder) ──────
   async function fetchAhaIdea(cfg, ideaRef) {
     throw new Error('Aha integration is Phase 2 — not yet implemented');
@@ -698,6 +997,9 @@ const API = (() => {
   return {
     fetchJiraTicket, createJiraTicket, updateJiraTicket, addJiraComment, addJiraRemoteLink, getJiraRemoteLinks, fetchJiraComponents, fetchJiraIssueTypes, fetchJiraCreateMeta,
     fetchJiraComments, fetchJiraAttachments, downloadJiraAttachment, uploadJiraAttachment,
+    fetchOnPremJiraTicket, createOnPremJiraTicket, updateOnPremJiraTicket, addOnPremJiraComment, addOnPremJiraRemoteLink, getOnPremJiraRemoteLinks,
+    fetchOnPremJiraComponents, fetchOnPremJiraIssueTypes, fetchOnPremJiraCreateMeta,
+    fetchOnPremJiraComments, fetchOnPremJiraAttachments, downloadOnPremJiraAttachment, uploadOnPremJiraAttachment, findExistingOnPremJiraClone,
     fetchZdTicket, createZdTicket, updateZdTicket, addZdInternalNote, deleteZdComment, deleteZdAttachment, resolveZdUserId, resolveZdUserName,
     fetchZdComments, downloadZdAttachment, uploadZdAttachment, addZdComment,
     fetchZdGroups, findExistingZdClone, findExistingJiraClone,

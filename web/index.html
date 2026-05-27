@@ -1,0 +1,386 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>VTM Support Highway &mdash; install &amp; usage</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/png" sizes="any" href="/versaterm-logo.png" />
+  <link rel="apple-touch-icon" href="/versaterm-logo.png" />
+  <style>
+    :root {
+      --kale-800:  #03363D;
+      --kale-700:  #04444C;
+      --kale-100:  #DCEEF1;
+      --grey-100:  #F8F9F9;
+      --grey-200:  #E9EBED;
+      --grey-300:  #D8DCDE;
+      --grey-600:  #68737D;
+      --grey-700:  #49545C;
+      --grey-800:  #2F3941;
+      --blue-600:  #1F73B7;
+      --blue-700:  #144A75;
+      --crimson-600: #CC3340;
+      --pistachio-600: #228F67;
+      --lemon-600: #FFD424;
+      --vt-navy:   #1E3A5F;
+      --vt-amber:  #F5821F;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--grey-800);
+      background: var(--grey-100);
+    }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+    header.hero {
+      background: var(--vt-navy);
+      color: #FFFFFF;
+      padding: 36px 0 30px;
+      border-bottom: 4px solid var(--vt-amber);
+    }
+    header.hero .wrap { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    header.hero .brand {
+      display: block;
+      width: 48px; height: auto;
+      background: #FFFFFF;
+      padding: 6px 8px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      flex: 0 0 auto;
+    }
+    header.hero h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: 0.02em;
+      font-weight: 700;
+      color: var(--vt-amber);
+    }
+    header.hero .sub { color: #DCEEF1; font-size: 15px; margin: 6px 0 0; width: 100%; }
+    header.hero .version {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.10);
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    header.hero .topnav { width: 100%; margin-top: 18px; display: flex; gap: 18px; font-size: 13.5px; flex-wrap: wrap; }
+    header.hero .topnav a { color: #DCEEF1; text-decoration: none; border-bottom: 1px dashed transparent; }
+    header.hero .topnav a:hover { border-bottom-color: var(--vt-amber); color: #FFF; }
+
+    section.band { padding: 28px 0 4px; }
+    section.band.alt { background: #FFFFFF; border-top: 1px solid var(--grey-200); border-bottom: 1px solid var(--grey-200); }
+    section.band.deep {
+      background: linear-gradient(180deg, #FAFBFC 0%, #F1F4F7 100%);
+      border-top: 1px solid var(--grey-200);
+      padding-bottom: 30px;
+    }
+    section .lede { color: var(--grey-600); font-size: 14px; margin: 4px 0 18px; }
+
+    h2 {
+      margin: 8px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--grey-200);
+      font-size: 22px;
+      color: var(--kale-800);
+      font-weight: 700;
+    }
+    h3 { margin-top: 22px; font-size: 16px; color: var(--grey-700); font-weight: 600; }
+    h4 {
+      margin: 16px 0 6px;
+      font-size: 13.5px;
+      color: var(--grey-700);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    p { margin: 10px 0; }
+    ol, ul { padding-left: 24px; }
+    li { margin: 8px 0; }
+
+    code, kbd {
+      background: var(--grey-200);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+      font-size: 0.9em;
+      color: var(--kale-800);
+    }
+    pre {
+      background: var(--grey-800);
+      color: #E9EBED;
+      padding: 12px 14px;
+      border-radius: 5px;
+      font-family: ui-monospace, "SF Mono", Consolas, monospace;
+      font-size: 12.5px;
+      overflow-x: auto;
+      line-height: 1.45;
+    }
+
+    .download-card {
+      background: #FFFFFF;
+      border: 1px solid var(--grey-200);
+      border-radius: 8px;
+      padding: 22px 24px;
+      margin: 20px 0 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .download-card .left .title { font-size: 12px; color: var(--grey-600); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; margin: 0 0 4px; }
+    .download-card .left .what { font-size: 16px; color: var(--grey-800); font-weight: 600; }
+    .download-card .left .meta { font-size: 12.5px; color: var(--grey-600); margin-top: 4px; }
+    .download {
+      display: inline-block;
+      padding: 14px 26px;
+      background: var(--vt-amber);
+      color: #FFFFFF;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 6px;
+      font-size: 16px;
+      border: 1px solid var(--vt-amber);
+      box-shadow: 0 2px 4px rgba(245,130,31,0.25);
+    }
+    .download:hover { background: #E07512; border-color: #E07512; }
+
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; background: var(--grey-200); color: var(--grey-700); font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; }
+    .pill.green { background: #DBF0E5; color: var(--pistachio-600); }
+    .pill.navy  { background: var(--vt-navy); color: var(--vt-amber); }
+
+    .callout {
+      background: #FFF8DC;
+      border: 1px solid #F0D68A;
+      border-left: 4px solid var(--lemon-600);
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 16px 0;
+    }
+    .callout.info { background: #EAF4FB; border-color: #C3DCEF; border-left-color: var(--blue-600); }
+    .callout.success { background: #DBF0E5; border-color: #A6D8BD; border-left-color: var(--pistachio-600); }
+
+    .steps { counter-reset: stp; list-style: none; padding: 0; margin: 12px 0; }
+    .steps > li {
+      counter-increment: stp;
+      padding: 14px 16px 14px 56px;
+      background: #FFFFFF;
+      border: 1px solid var(--grey-200);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .steps > li::before {
+      content: counter(stp);
+      position: absolute;
+      left: 14px;
+      top: 12px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--vt-navy);
+      color: var(--vt-amber);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .steps > li strong:first-child { font-size: 15px; color: var(--kale-800); }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin: 14px 0 4px;
+    }
+    .feature {
+      border: 1px solid var(--grey-200);
+      border-radius: 6px;
+      padding: 14px 16px;
+      background: #FFFFFF;
+    }
+    .feature h4 { margin-top: 0; color: var(--vt-amber); }
+    .feature p { font-size: 13.5px; margin: 6px 0 0; color: var(--grey-700); }
+
+    /* Changelog */
+    .release {
+      background: #FFFFFF;
+      border: 1px solid var(--grey-200);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 12px 0;
+    }
+    .release h3 {
+      margin: 0 0 8px;
+      color: var(--kale-800);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .release h3 .date {
+      color: var(--grey-600);
+      font-weight: 500;
+      font-size: 13px;
+      margin-left: 6px;
+    }
+    .release ul { margin: 6px 0 0; padding-left: 22px; }
+    .release li { margin: 4px 0; font-size: 13.5px; color: var(--grey-800); }
+
+    footer { color: var(--grey-600); font-size: 12.5px; text-align: center; padding: 30px 20px; }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <img class="brand" src="/versaterm-logo.png" alt="Versaterm" onerror="this.style.display='none'" />
+    <div>
+      <h1>VTM SUPPORT HIGHWAY</h1>
+      <span class="version" id="ver-pill">v1.4.2</span>
+    </div>
+    <p class="sub">A Chrome extension that creates and links tickets across <strong>Zendesk</strong>, <strong>Jira Cloud</strong>, and <strong>On-Prem Jira (SUP)</strong> &mdash; one click from a support ticket to a defect or technical request, fully populated and cross-linked.</p>
+    <nav class="topnav">
+      <a href="#quickstart">Quick start</a>
+      <a href="#use">Use it</a>
+      <a href="#features">What it does</a>
+      <a href="#changelog">Changelog</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+    </nav>
+  </div>
+</header>
+
+<section class="band" id="quickstart">
+  <div class="wrap">
+    <h2>Quick start</h2>
+    <p class="lede">Three steps. Five minutes. No installer.</p>
+
+    <div class="download-card">
+      <div class="left">
+        <p class="title">Step 1 &mdash; Download the extension zip</p>
+        <div class="what"><code id="zip-name">vtm-support-highway.zip</code> <span class="pill navy" id="ver-pill2">v1.4.2</span></div>
+        <div class="meta">unpacked Chrome extension &middot; works on Windows + Mac + Linux</div>
+      </div>
+      <a class="download" href="vtm-support-highway.zip" id="dl-link">Download zip</a>
+    </div>
+
+    <ol class="steps">
+      <li><strong>Unzip it</strong> somewhere easy to find (for example: <code>Downloads/vtm-support-highway</code> or <code>Desktop/vtm-support-highway</code>).</li>
+      <li><strong>In Chrome:</strong> open <code>chrome://extensions</code>, toggle <strong>Developer mode</strong> ON, click <strong>Load unpacked</strong>, and select the unzipped extension folder.</li>
+      <li><strong>Configure it:</strong> click the toolbar icon, hit the gear, and paste in your Jira Cloud email + API token (and on-prem Jira credentials if you'll be cloning to SUP). Save.</li>
+      <li><strong>You're done.</strong> Open any Zendesk ticket on <code>versatermhelp.zendesk.com</code> and you'll see two new buttons: <em>Clone to Support Defect</em> and <em>Clone to Tech Request</em>.</li>
+    </ol>
+
+    <div class="callout info">
+      <strong>Updating later:</strong> re-download the zip, unzip over the same folder (overwrite all), then go to <code>chrome://extensions</code> and click the &#x21BB; reload arrow on the VTM Support Highway card. Confirm the version number bumps.
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="use">
+  <div class="wrap">
+    <h2>Use it</h2>
+    <p class="lede">Three entry points cover the whole workflow.</p>
+
+    <h3>From a Zendesk ticket &rarr; clone outward</h3>
+    <ol>
+      <li>Open a Zendesk ticket (e.g. <code>versatermhelp.zendesk.com/agent/tickets/148213</code>).</li>
+      <li>Two amber buttons appear in the ticket header: <strong>Clone to Support Defect</strong> (Jira Cloud CRMS) and <strong>Clone to Tech Request</strong> (On-Prem Jira SUP).</li>
+      <li>Click one. A popup window opens with summary, description, priority, components, and reporter pre-filled from the Zendesk ticket. Tweak anything you need.</li>
+      <li>Click <strong>Create</strong>. The extension creates the Jira issue, then writes a private comment on the Zendesk ticket with a link back. Both sides are now cross-linked.</li>
+    </ol>
+
+    <h3>From a Jira issue &rarr; check or jump to the Zendesk source</h3>
+    <ol>
+      <li>Open any Jira Cloud issue under <code>versaterminc.atlassian.net/browse/&hellip;</code>.</li>
+      <li>If the issue was cloned from Zendesk, a banner appears with a one-click link back to the originating ticket.</li>
+    </ol>
+
+    <h3>From anywhere &rarr; the toolbar popup</h3>
+    <ol>
+      <li>Click the VTM Support Highway icon in the Chrome toolbar.</li>
+      <li>Paste a Zendesk ticket ID, Jira key, or Aha record &mdash; the popup gives you cross-system search, link, and clone actions without needing to be on any particular page.</li>
+    </ol>
+
+    <div class="callout success">
+      <strong>Auto-online (Zendesk):</strong> the extension also flips your Zendesk agent status back to <em>Online</em> after Chrome wakes from idle, so you don't miss tickets routed by status.
+    </div>
+  </div>
+</section>
+
+<section class="band" id="features">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="lede">One extension, three systems, zero copy-paste.</p>
+
+    <div class="features">
+      <div class="feature">
+        <h4>Clone Zendesk &rarr; Jira Cloud</h4>
+        <p>One click on a Zendesk ticket creates a <strong>Support Defect</strong> in Jira Cloud CRMS with subject, description, customer, priority and components pre-filled. A private comment with the Jira link is added back to Zendesk.</p>
+      </div>
+      <div class="feature">
+        <h4>Clone Zendesk &rarr; On-Prem Jira</h4>
+        <p>Same one-click flow targeting the on-prem Jira SUP project for technical requests &mdash; honours different field mappings, priorities and components for the on-prem schema.</p>
+      </div>
+      <div class="feature">
+        <h4>Cross-link both directions</h4>
+        <p>Every clone writes a back-link comment on the Zendesk side, and the Jira issue carries the originating ticket URL. Banners on Jira pages surface the link without having to dig.</p>
+      </div>
+      <div class="feature">
+        <h4>Aha! integration</h4>
+        <p>Look up Aha records and link them into the chain from the toolbar popup &mdash; useful when a support ticket maps to an existing roadmap item.</p>
+      </div>
+      <div class="feature">
+        <h4>Auto-online for Zendesk</h4>
+        <p>Restores your agent status to <em>Online</em> automatically when Chrome resumes from idle. No more silently missing routed tickets.</p>
+      </div>
+      <div class="feature">
+        <h4>Works in the Zendesk SPA</h4>
+        <p>Buttons inject on every ticket as you navigate &mdash; no need to refresh the page when you switch tickets in the agent UI.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band deep" id="changelog">
+  <div class="wrap">
+    <h2>Changelog</h2>
+    <p class="lede">Each release is also recorded in <code>CHANGELOG.md</code> in the source repo.</p>
+    <!-- CHANGELOG:START -->
+<article class="release"><h3>v1.4.2 <span class="date">— 2026-05-27</span></h3><ul><li><strong>Fix: Jira Cloud create fails when the project priority scheme was changed.</strong> Priorities are now resolved against the live <code>createmeta</code> allowed values with synonym matching (Medium ↔ Normal, Critical ↔ Highest ↔ Blocker, P1/P2/P3 …). When the requested priority doesn't exist on the current scheme, a sensible fallback in the middle of the list is used; if Jira still rejects the field, the create is retried once without it so the issue is created with the project's default priority rather than failing.</li>
+<li>Same logic applied to <code>updateJiraTicket</code> via <code>editmeta</code>.</li>
+<li>Wire format now prefers <code>{ id }</code> over <code>{ name }</code> so admin renames don't break future calls.</li></ul></article>
+<article class="release"><h3>v1.4.1 <span class="date">— 2026-05-27</span></h3><ul><li><strong>Fix: Zendesk clone buttons no longer require a tab refresh after navigating to a ticket.</strong> Content script now matches all of <code>/agent/*</code> and hooks <code>history.pushState</code> / <code>replaceState</code> / <code>popstate</code> plus a 1.5 s interval safety net so the buttons inject on the very first SPA navigation to a ticket.</li></ul></article>
+<!-- CHANGELOG:END -->
+  </div>
+</section>
+
+<section class="band alt" id="troubleshooting">
+  <div class="wrap">
+    <h2>Troubleshooting</h2>
+
+    <h3>I navigated to a ticket and don't see the buttons</h3>
+    <p>As of <strong>v1.4.1</strong> the buttons should always appear on first navigation. If they don't, give it 2&ndash;3 seconds for the Zendesk SPA to finish painting the header. Still nothing? Reload the tab once &mdash; and if that fixes it, ping Bill with the ticket URL so we can tune the selectors.</p>
+
+    <h3>"Clone" button does nothing / authentication failure</h3>
+    <p>Open the extension popup, click the gear, and confirm your Jira Cloud email + API token are present and not expired. For on-prem Jira (SUP) the username/password pair lives in the same panel. Save, then try again.</p>
+
+    <h3>Banner on Jira side missing</h3>
+    <p>The Jira-side banner only appears for issues created by the extension (it reads the linked Zendesk URL from the description). Older issues won't have it.</p>
+
+    <h3>Updating to a new version</h3>
+    <p>Re-download the zip, unzip over the same folder (overwrite all), then click &#x21BB; on the extension card at <code>chrome://extensions</code>.</p>
+  </div>
+</section>
+
+<footer>
+  <p>VTM Support Highway &middot; <span id="ver-pill3">v1.4.2</span> &middot; Versaterm Public Safety</p>
+</footer>
+
+</body>
+</html>
+

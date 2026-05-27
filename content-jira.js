@@ -1,49 +1,56 @@
 /**
- * content-jira.js — Injected into Jira Server issue pages.
- * Adds a "Clone to Zendesk" button on SUP tickets.
+ * content-jira.js — Injected into Jira Cloud issue pages.
+ * Adds a floating "Clone to Zendesk" button on any CRMS or project ticket.
  */
 (function () {
   'use strict';
 
-  // Only run on issue pages: /browse/SUP-XXXXX
-  const match = window.location.pathname.match(/\/browse\/(SUP-\d+)/);
+  // Match any Jira issue key: /browse/CRMS-37, /browse/SUP-123, etc.
+  const match = window.location.pathname.match(/\/browse\/([A-Z][A-Z0-9]+-\d+)/i);
   if (!match) return;
 
-  const issueKey = match[1];
+  const issueKey = match[1].toUpperCase();
   let btnInjected = false;
 
   function injectButton() {
     if (btnInjected) return;
-    // Jira Server toolbar: look for the operations bar or toolbar area
+
+    // Jira Cloud (React-based) selectors — try multiple in priority order
     const toolbar =
+      document.querySelector('[data-testid="issue-header-actions"]') ||
+      document.querySelector('[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]') ||
+      document.querySelector('[data-testid="issue.views.issue-base.foundation.breadcrumbs"]') ||
+      document.querySelector('#jira-issue-header') ||
+      // Jira Server / classic Cloud fallbacks
       document.querySelector('#opsbar-jira\\.issue\\.tools .aui-toolbar2-primary') ||
       document.querySelector('.aui-toolbar2-primary') ||
-      document.querySelector('#stalker .command-bar') ||
-      document.querySelector('#opsbar-opsbar-transitions');
+      document.querySelector('#stalker .command-bar');
 
-    if (!toolbar) return; // page not ready yet
+    if (toolbar) {
+      btnInjected = true;
+      const btn = document.createElement('button');
+      btn.id = 'vtm-clone-to-zd';
+      btn.className = 'vtm-clone-btn';
+      btn.title = 'Clone this ticket to Zendesk (VTM Support Highway)';
+      btn.innerHTML = '<span class="vtm-icon">⇄</span> Clone to ZD';
+      btn.addEventListener('click', function (e) { e.preventDefault(); startClone(); });
+      toolbar.appendChild(btn);
+      console.log('[VTM] Injected "Clone to Zendesk" button (toolbar) on ' + issueKey);
+      return;
+    }
 
-    btnInjected = true;
-
-    // Create button group
-    const group = document.createElement('div');
-    group.className = 'aui-toolbar2-group vtm-clone-group';
-
-    const btn = document.createElement('a');
-    btn.id = 'vtm-clone-to-zd';
-    btn.className = 'aui-button toolbar-trigger vtm-clone-btn';
-    btn.href = '#';
-    btn.title = 'Clone this SUP ticket to Zendesk (VTM Support Highway)';
-    btn.innerHTML = '<span class="vtm-icon">⇄</span> Clone to Zendesk';
-
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      startClone();
-    });
-
-    group.appendChild(btn);
-    toolbar.appendChild(group);
-    console.log('[VTM] Injected "Clone to Zendesk" button on ' + issueKey);
+    // Fallback: floating button anchored to viewport (always works regardless of DOM changes)
+    if (!document.getElementById('vtm-clone-to-zd')) {
+      btnInjected = true;
+      const btn = document.createElement('button');
+      btn.id = 'vtm-clone-to-zd';
+      btn.className = 'vtm-clone-btn vtm-clone-floating';
+      btn.title = 'Clone this ticket to Zendesk (VTM Support Highway)';
+      btn.innerHTML = '<span class="vtm-icon">⇄</span> Clone to ZD';
+      btn.addEventListener('click', function (e) { e.preventDefault(); startClone(); });
+      document.body.appendChild(btn);
+      console.log('[VTM] Injected "Clone to Zendesk" floating button on ' + issueKey);
+    }
   }
 
   // ── Toast notification ──
@@ -82,13 +89,24 @@
   }
 
   // ── Inject when DOM is ready ──
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { setTimeout(injectButton, 500); });
-  } else {
-    setTimeout(injectButton, 500);
+  // Jira Cloud renders lazily via React — retry several times before giving up on toolbar
+  // and falling back to a floating button.
+  let retryCount = 0;
+  function tryInject() {
+    injectButton();
+    if (!btnInjected && retryCount < 20) {
+      retryCount++;
+      setTimeout(tryInject, 500);
+    }
   }
 
-  // Also watch for AJAX-loaded content (Jira uses a lot of dynamic rendering)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(tryInject, 300); });
+  } else {
+    setTimeout(tryInject, 300);
+  }
+
+  // Also watch for AJAX-loaded content (Jira Cloud SPA navigation)
   const observer = new MutationObserver(function () {
     if (!btnInjected) injectButton();
   });

@@ -14,6 +14,7 @@ let currentSource = null;   // 'jira' | 'zendesk' | 'aha' | null
 let currentTicketId = null; // key or id
 let ticketData = null;      // normalized ticket object
 let cfg = null;             // settings
+let paramTarget = null;     // target pre-selected from content-script button ('jira' | 'jira-onprem' | null)
 
 const JOB_KEY = 'vtm_highway_job';
 
@@ -26,11 +27,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   wireSettingsPanel();
   wireActionButtons();
 
+  // Stamp the popup with the running extension version (from manifest)
+  try {
+    const m = chrome.runtime.getManifest();
+    const el = document.getElementById('ext-version');
+    if (el && m && m.version) el.textContent = 'v' + m.version;
+  } catch (_) { /* non-fatal */ }
+
   // Check for URL params (passed when opened from content script button)
   const urlParams = new URLSearchParams(window.location.search);
   const paramSource = urlParams.get('source');
   const paramTicketId = urlParams.get('ticketId');
-  const paramTarget = urlParams.get('target');
+  paramTarget = urlParams.get('target') || null;
 
   let tabSource = null, tabTicketId = null;
 
@@ -336,10 +344,35 @@ function populatePreview() {
     // Description left empty — user fills in the Jira-specific brief summary
     $('fld-description').value = '';
 
-    // Default project to SUP
-    $('fld-project').value = ticketData.project || 'SUP';
+    // Default project + issue type based on target
+    if (paramTarget === 'jira-onprem') {
+      // On-prem Tech Request: project fixed to SUP.
+      // Issue Type, Severity, and Cloud Components don't apply — hide them.
+      $('fld-project').value = cfg.onPremJiraTechProject || 'SUP';
+      $('lbl-issuetype').style.display  = 'none';
+      $('lbl-severity').style.display   = 'none';
+      $('lbl-components').style.display = 'none';
+      $('lbl-product').style.display    = '';
+    } else {
+      $('lbl-issuetype').style.display  = '';
+      $('lbl-severity').style.display   = '';
+      $('lbl-components').style.display = '';
+      $('lbl-product').style.display    = 'none';
+      $('fld-project').value = ticketData.project || 'CRMS';
+      $('fld-issuetype').dataset.preferredType = 'Support Defect';
 
-    // Auto-fill CRMS fields from ZD requester/org data
+      // Load components and issue types from Jira Cloud
+      updateIssueTypes($('fld-project').value || 'CRMS');
+      loadComponents($('fld-project').value || 'CRMS');
+
+      $('fld-project').onchange = () => {
+        const pk = $('fld-project').value;
+        updateIssueTypes(pk);
+        loadComponents(pk);
+      };
+    }
+
+    // Auto-fill fields from ZD requester/org data
     if (ticketData.requesterName || ticketData.requesterEmail) {
       const contact = ticketData.requesterName
         ? ticketData.requesterName + (ticketData.requesterEmail ? ' <' + ticketData.requesterEmail + '>' : '')
@@ -349,16 +382,6 @@ function populatePreview() {
     if (ticketData.organization) {
       $('fld-client').value = ticketData.organization;
     }
-
-    // Load components and issue types for the selected project
-    updateIssueTypes($('fld-project').value);
-    loadComponents($('fld-project').value);
-
-    $('fld-project').onchange = () => {
-      const pk = $('fld-project').value;
-      updateIssueTypes(pk);
-      loadComponents(pk);
-    };
 
   } else {
     // Unknown/Aha — show both
@@ -391,8 +414,11 @@ async function updateIssueTypes(projectKey) {
       opt.textContent = t.name;
       sel.appendChild(opt);
     });
-    // Restore previous selection if still valid
-    if (types.some(t => t.name === prev)) sel.value = prev;
+    // Preferred type from data attribute (set when opened from a ZD button)
+    const preferred = sel.dataset.preferredType || prev;
+    if (types.some(t => t.name === preferred)) sel.value = preferred;
+    else if (types.some(t => t.name === 'Support Defect')) sel.value = 'Support Defect';
+    else sel.value = types[0].name;
     console.log('[Popup] Issue types for ' + projectKey + ':', types.map(t => t.name));
   } catch (e) {
     console.error('[Popup] Failed to load issue types:', e);
@@ -441,7 +467,13 @@ async function loadZdGroups() {
 function updatePreviewHeading() {
   const heading = $('preview-heading');
   if (currentSource === 'zendesk') {
-    heading.textContent = 'Create from Zendesk → Jira / Aha';
+    if (paramTarget === 'jira-onprem') {
+      heading.textContent = 'Clone to Tech Request — On-Prem Jira (SUP)';
+    } else if (paramTarget === 'jira') {
+      heading.textContent = 'Clone to Support Defect — Jira Cloud (CRMS)';
+    } else {
+      heading.textContent = 'Create from Zendesk → Jira Cloud / On-Prem Jira / Aha';
+    }
   } else if (currentSource === 'jira') {
     heading.textContent = 'Create from Jira → Zendesk / Aha';
   } else if (currentSource === 'aha') {
@@ -453,9 +485,15 @@ function updatePreviewHeading() {
 
 function updateActionButtons() {
   // Show buttons for target systems (not the source system)
-  $('btn-create-jira').style.display    = (currentSource !== 'jira')    ? '' : 'none';
-  $('btn-create-zendesk').style.display = (currentSource !== 'zendesk') ? '' : 'none';
-  $('btn-create-aha').style.display     = ''; // Always show (disabled for Phase 2)
+  // When opened from a ZD page button with a specific target, show only that button
+  const showDefect  = (currentSource !== 'jira') && (paramTarget === null || paramTarget === 'jira');
+  const showTech    = (currentSource === 'zendesk') && (paramTarget === null || paramTarget === 'jira-onprem');
+  const showZd      = (currentSource !== 'zendesk') && !paramTarget;
+
+  $('btn-create-jira').style.display        = showDefect ? '' : 'none';
+  $('btn-create-jira-onprem').style.display  = showTech   ? '' : 'none';
+  $('btn-create-zendesk').style.display      = showZd     ? '' : 'none';
+  $('btn-create-aha').style.display          = paramTarget ? 'none' : ''; // hide Aha when pre-targeted
 }
 
 // ────── Settings Panel ──────
@@ -528,8 +566,11 @@ function wireActionButtons() {
     await fetchAndPreview();
   });
 
-  // Create Jira
+  // Create Jira Cloud (Support Defect)
   $('btn-create-jira').addEventListener('click', () => createTicket('jira'));
+
+  // Create On-Prem Jira (Tech Request)
+  $('btn-create-jira-onprem').addEventListener('click', () => createTicket('jira-onprem'));
 
   // Create Zendesk
   $('btn-create-zendesk').addEventListener('click', () => createTicket('zendesk'));
@@ -548,7 +589,7 @@ function wireActionButtons() {
 }
 
 async function createTicket(target) {
-  const btn = target === 'jira' ? $('btn-create-jira') : $('btn-create-zendesk');
+  const btn = target === 'jira' ? $('btn-create-jira') : target === 'jira-onprem' ? $('btn-create-jira-onprem') : $('btn-create-zendesk');
   btn.disabled = true;
 
   cfg = await Settings.load();
@@ -577,8 +618,30 @@ async function createTicket(target) {
       severity: fields.severity,
       client: fields.client,
       contact: fields.contact,
-      refNumber: fields.refNumber,
-      product: fields.product
+      component: fields.component,
+      fixBuild: fields.fixBuild,
+      stepsToReproduce: fields.stepsToReproduce
+    };
+  } else if (target === 'jira-onprem') {
+    const techProject = cfg.onPremJiraTechProject || 'SUP';
+    if (!techProject) { showStatus('On-Prem Tech Project Key not configured. Open Settings.', 'error'); btn.disabled = false; return; }
+    if (!fields.product) { showStatus('Product is required for on-prem Jira tickets.', 'error'); btn.disabled = false; return; }
+    targetFields = {
+      project: techProject,
+      issueType: 'Support',
+      priority: fields.priorityJira || 'Medium',
+      summary: fields.summary,
+      // On-prem Tech Requests put the customer's message in Original Submittal only.
+      // Leave Description blank unless the user typed something into the Description field.
+      description: fields.description || '',
+      originalSubmittal: fields.originalSubmittal,
+      client: fields.client,
+      contact: fields.contact,
+      component: fields.component,
+      fixBuild: fields.fixBuild,
+      stepsToReproduce: fields.stepsToReproduce,
+      product: fields.product,
+      serviceCategory: 'Technical request'
     };
   } else if (target === 'zendesk') {
     const zdDesc = fields.zdDescription || fields.summary || 'No description provided';
@@ -647,7 +710,9 @@ function readFormFields() {
     severity: $('fld-severity').value,
     client: $('fld-client').value.trim(),
     contact: $('fld-contact').value.trim(),
-    refNumber: $('fld-refnumber').value.trim(),
+    component: $('fld-component') ? $('fld-component').value.trim() : '',
+    fixBuild: $('fld-fixbuild') ? $('fld-fixbuild').value.trim() : '',
+    stepsToReproduce: $('fld-steps') ? $('fld-steps').value.trim() : '',
     product: $('fld-product').value,
     // Zendesk-target fields
     zdDescription: $('fld-zd-description').value.trim(),
@@ -663,8 +728,9 @@ function showResult(result, target, crosslinked, copyStats, wasResync, resyncSta
   $('result-section').style.display = 'block';
   hideStatus();
 
+  const targetLabel = target === 'jira' ? 'Jira Cloud' : target === 'jira-onprem' ? 'On-Prem Jira' : 'Zendesk';
   if (wasResync) {
-    $('result-title').textContent = (target === 'jira' ? 'Jira' : 'Zendesk') + ' Clone — Full Resync';
+    $('result-title').textContent = targetLabel + ' Clone — Full Resync';
     let detail = result.key + ' updated.';
     if (resyncStats) {
       const parts = [];
@@ -676,7 +742,7 @@ function showResult(result, target, crosslinked, copyStats, wasResync, resyncSta
     }
     $('result-detail').textContent = detail;
   } else {
-    $('result-title').textContent = (target === 'jira' ? 'Jira' : 'Zendesk') + ' Ticket Created';
+    $('result-title').textContent = targetLabel + ' Ticket Created';
     let detail = result.key + ' created successfully.';
     if (copyStats && (copyStats.comments || copyStats.attachments)) {
       detail += ' Copied ' + copyStats.comments + ' comment(s), ' + copyStats.attachments + ' attachment(s).';

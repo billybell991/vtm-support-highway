@@ -1,0 +1,13 @@
+# build staging
+_stage-*/
+*.zip
+
+# editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# secrets / local config
+*.local.json
+.env
+.env.*
