@@ -3,6 +3,12 @@
 All notable changes to the extension are recorded here. The latest section is
 mirrored to the install page at <http://10.10.51.43:8765/vtm-support-highway.html>.
 
+## v1.4.3 — 2026-06-01
+
+- Pre-configure Jira Cloud API token as shared team default — no token setup required for new users.
+- Jira Cloud API Token field in Settings is now directly editable (fixes MV3 CSP issue that blocked the pencil-unlock button).
+
+
 ## v1.4.2 — 2026-05-27
 
 - **Fix: Jira Cloud create fails when the project priority scheme was changed.**

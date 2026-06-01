@@ -8,7 +8,7 @@ const Settings = (() => {
   const DEFAULTS = {
     jiraUrl: 'https://versaterminc.atlassian.net',
     jiraUser: '',   // Jira Cloud: each user enters their own email address
-    jiraPass: '',   // Jira Cloud: each user enters their own API token (https://id.atlassian.com/manage-profile/security/api-tokens)
+    jiraPass: ''   // each user enters their own Jira Cloud API token,   // Jira Cloud: shared API token (pre-configured)
     onPremJiraUrl: 'http://atlassian.versaterm.com:8080',
     onPremJiraUser: '',
     onPremJiraPass: '',

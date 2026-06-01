@@ -241,7 +241,7 @@
     <img class="brand" src="/versaterm-logo.png" alt="Versaterm" onerror="this.style.display='none'" />
     <div>
       <h1>VTM SUPPORT HIGHWAY</h1>
-      <span class="version" id="ver-pill">v1.4.2</span>
+      <span class="version" id="ver-pill">v1.4.3</span>
     </div>
     <p class="sub">A Chrome extension that creates and links tickets across <strong>Zendesk</strong>, <strong>Jira Cloud</strong>, and <strong>On-Prem Jira (SUP)</strong> &mdash; one click from a support ticket to a defect or technical request, fully populated and cross-linked.</p>
     <nav class="topnav">
@@ -262,7 +262,7 @@
     <div class="download-card">
       <div class="left">
         <p class="title">Step 1 &mdash; Download the extension zip</p>
-        <div class="what"><code id="zip-name">vtm-support-highway.zip</code> <span class="pill navy" id="ver-pill2">v1.4.2</span></div>
+        <div class="what"><code id="zip-name">vtm-support-highway.zip</code> <span class="pill navy" id="ver-pill2">v1.4.3</span></div>
         <div class="meta">unpacked Chrome extension &middot; works on Windows + Mac + Linux</div>
       </div>
       <a class="download" href="vtm-support-highway.zip" id="dl-link">Download zip</a>
@@ -351,10 +351,8 @@
     <h2>Changelog</h2>
     <p class="lede">Each release is also recorded in <code>CHANGELOG.md</code> in the source repo.</p>
     <!-- CHANGELOG:START -->
-<article class="release"><h3>v1.4.2 <span class="date">— 2026-05-27</span></h3><ul><li><strong>Fix: Jira Cloud create fails when the project priority scheme was changed.</strong> Priorities are now resolved against the live <code>createmeta</code> allowed values with synonym matching (Medium ↔ Normal, Critical ↔ Highest ↔ Blocker, P1/P2/P3 …). When the requested priority doesn't exist on the current scheme, a sensible fallback in the middle of the list is used; if Jira still rejects the field, the create is retried once without it so the issue is created with the project's default priority rather than failing.</li>
-<li>Same logic applied to <code>updateJiraTicket</code> via <code>editmeta</code>.</li>
-<li>Wire format now prefers <code>{ id }</code> over <code>{ name }</code> so admin renames don't break future calls.</li></ul></article>
-<article class="release"><h3>v1.4.1 <span class="date">— 2026-05-27</span></h3><ul><li><strong>Fix: Zendesk clone buttons no longer require a tab refresh after navigating to a ticket.</strong> Content script now matches all of <code>/agent/*</code> and hooks <code>history.pushState</code> / <code>replaceState</code> / <code>popstate</code> plus a 1.5 s interval safety net so the buttons inject on the very first SPA navigation to a ticket.</li></ul></article>
+<article class="release"><h3>v1.4.3 <span class="date">— 2026-06-01</span></h3><ul><li>Pre-configure Jira Cloud API token as shared team default — no token setup required for new users</li>
+<li>Jira Cloud API Token field in Settings is now directly editable (fixes MV3 CSP issue that blocked the pencil-unlock button)</li></ul></article>
 <!-- CHANGELOG:END -->
   </div>
 </section>
@@ -387,7 +385,7 @@
 </section>
 
 <footer>
-  <p>VTM Support Highway &middot; <span id="ver-pill3">v1.4.2</span> &middot; Versaterm Public Safety</p>
+  <p>VTM Support Highway &middot; <span id="ver-pill3">v1.4.3</span> &middot; Versaterm Public Safety</p>
 </footer>
 
 </body>

@@ -35,11 +35,8 @@
           </div>
         </label>
         <label>Email <input type="email" id="cfg-jira-user" placeholder="you@versaterm.com" /></label>
-        <label>API Token <span style="font-weight:400;color:#868e96">(pre-configured)</span>
-          <div class="locked-field">
-            <input type="password" id="cfg-jira-pass" readonly />
-            <button type="button" class="btn-unlock" onclick="this.previousElementSibling.removeAttribute('readonly');this.style.display='none'" title="Modify">&#9998;</button>
-          </div>
+        <label>API Token <span style="font-weight:400;color:#868e96">(pre-configured — editable)</span>
+          <input type="password" id="cfg-jira-pass" />
         </label>
       </fieldset>
       <fieldset>
