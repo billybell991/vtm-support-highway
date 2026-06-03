@@ -810,7 +810,7 @@ const API = (() => {
     try {
       const jql = 'summary ~ "\\[' + sourceKey + '\\]" ORDER BY created DESC';
       console.log('[API] Jira clone search JQL:', jql);
-      const data = await jiraGet(cfg, '/rest/api/2/search?jql=' + encodeURIComponent(jql) + '&maxResults=1&fields=summary');
+      const data = await jiraGet(cfg, '/rest/api/3/search/jql?jql=' + encodeURIComponent(jql) + '&maxResults=1&fields=summary');
       console.log('[API] Jira clone search result:', data.total, 'hits', data.issues && data.issues.length ? '→ ' + data.issues[0].key : '→ none');
       if (data.issues && data.issues.length > 0) {
         const issue = data.issues[0];
