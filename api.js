@@ -808,10 +808,10 @@ const API = (() => {
   /** Check if a Jira ticket already exists for this source ticket (by JQL summary search) */
   async function findExistingJiraClone(cfg, sourceKey) {
     try {
-      const jql = 'summary ~ "\\[' + sourceKey + '\\]" ORDER BY created DESC';
+      const jql = 'summary ~ "[' + sourceKey + ']" ORDER BY created DESC';
       console.log('[API] Jira clone search JQL:', jql);
       const data = await jiraGet(cfg, '/rest/api/3/search/jql?jql=' + encodeURIComponent(jql) + '&maxResults=1&fields=summary');
-      console.log('[API] Jira clone search result:', data.total, 'hits', data.issues && data.issues.length ? '→ ' + data.issues[0].key : '→ none');
+      console.log('[API] Jira clone search result:', data.issues ? data.issues.length : 0, 'hits', data.issues && data.issues.length ? '→ ' + data.issues[0].key : '→ none');
       if (data.issues && data.issues.length > 0) {
         const issue = data.issues[0];
         return { key: issue.key, id: issue.id, url: cfg.jiraUrl.replace(/\/+$/, '') + '/browse/' + issue.key };

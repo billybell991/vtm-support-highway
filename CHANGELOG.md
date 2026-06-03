@@ -3,6 +3,11 @@
 All notable changes to the extension are recorded here. The latest section is
 mirrored to the install page at <http://10.10.51.43:8765/vtm-support-highway.html>.
 
+## v1.4.10 — 2026-06-03
+
+- Fix JQL illegal escape: remove backslashes from bracket escaping in v3 search/jql
+
+
 ## v1.4.9 — 2026-06-03
 
 - Migrate Jira Cloud clone search to /rest/api/3/search/jql
