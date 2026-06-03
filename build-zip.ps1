@@ -111,7 +111,11 @@ try {
   }
 
   if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
-  $zipPath = Join-Path $OutDir 'vtm-support-highway.zip'
+  $zipPath = Join-Path $OutDir "vtm-support-highway-v$version.zip"
+  # Remove any old versioned zips to avoid accumulation
+  Get-ChildItem -Path $OutDir -Filter 'vtm-support-highway-v*.zip' -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -ne $zipPath } |
+    ForEach-Object { Remove-Item $_.FullName -Force; Write-Host "  -> removed old zip: $($_.Name)" }
   if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 
   Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zipPath -CompressionLevel Optimal
@@ -127,6 +131,13 @@ $indexPath = Join-Path $OutDir 'index.html'
 if (Test-Path $indexPath) {
   $html = Get-Content -Raw -Path $indexPath
   $html = [regex]::Replace($html, '(id="ver-pill[0-9]*">)v[0-9]+\.[0-9]+\.[0-9]+', '${1}v' + $version)
+  # Stamp versioned zip filename in the download card (zip-name element + dl-link href)
+  $zipBaseName = "vtm-support-highway-v$version.zip"
+  $html = [regex]::Replace($html, '(?<=id="zip-name">)[^<]+', $zipBaseName)
+  # Fix dl-link href regardless of attribute order
+  # Handle href either before or after id="dl-link" in the tag
+  $html = [regex]::Replace($html, '<a\b([^>]*?)href="[^"]*"([^>]*?id="dl-link"[^>]*)>', '<a$1href="' + $zipBaseName + '"$2>')
+  $html = [regex]::Replace($html, '<a\b([^>]*?id="dl-link"[^>]*?)href="[^"]*"([^>]*)>', '<a$1href="' + $zipBaseName + '"$2>')
 
   # Inject the latest changelog entries into the landing page between the
   # <!-- CHANGELOG:START --> and <!-- CHANGELOG:END --> markers.
