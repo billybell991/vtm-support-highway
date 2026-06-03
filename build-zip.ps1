@@ -81,6 +81,22 @@ $include = @(
   'icons'
 )
 
+# ── Syntax gate: node --check every JS file before packaging ─────────────────────
+$jsFiles = $include | Where-Object { $_ -like '*.js' } | ForEach-Object { Join-Path $PSScriptRoot $_ }
+$syntaxErrors = @()
+foreach ($jsFile in $jsFiles) {
+  if (-not (Test-Path $jsFile)) { continue }
+  $result = & node --check $jsFile 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    $syntaxErrors += "SYNTAX ERROR in ${jsFile}:`n${result}"
+  }
+}
+if ($syntaxErrors.Count -gt 0) {
+  Write-Error "Build aborted -- JS syntax errors found:`n$($syntaxErrors -join [char]10)"
+  exit 1
+}
+Write-Host "Syntax check: all JS files OK."
+
 # Stage into a clean temp folder so the zip root is the extension itself
 $stage = Join-Path $PSScriptRoot ("_stage-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $stage | Out-Null

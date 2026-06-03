@@ -6,6 +6,12 @@
 
 importScripts('api.js', 'settings.js');
 
+// Startup log -- if this line appears in the service worker console, all
+// importScripts() succeeded (settings.js parsed without errors).
+// If this line is MISSING from chrome://serviceworker-internals the service
+// worker crashed at startup -- check api.js / settings.js for syntax errors.
+console.log('[VTM Highway] Service worker loaded OK. v' + chrome.runtime.getManifest().version);
+
 const JOB_KEY = 'vtm_highway_job';
 
 /** Update job state in storage (popup reads this to show progress/results) */
@@ -365,7 +371,7 @@ async function handleQuickClone(msg, sender) {
     const fields = {
       project: 'SUP',
       issueType: issueType,
-      summary: '[ZD-' + sourceKey + '] ' + source.summary,
+      summary: source.summary,
       // On-prem Tech Requests: customer message goes in Original Submittal, not Description.
       description: '',
       originalSubmittal: source.description || '',
@@ -737,7 +743,7 @@ async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
   if (source && targetSystem === 'jira') {
     console.log('[BG] Updating fields on Jira ' + targetKey);
     const updateFields = {
-      summary: '[ZD-' + sourceInfo.ticketId + '] ' + source.summary,
+      summary: source.summary,
       description: source.description || source.summary,
       priority: source.priorityJira || 'Medium'
     };
@@ -749,7 +755,7 @@ async function doResync(cfg, targetSystem, targetKey, sourceInfo) {
   } else if (source && targetSystem === 'jira-onprem') {
     console.log('[BG] Updating fields on on-prem Jira ' + targetKey);
     const updateFields = {
-      summary: '[ZD-' + sourceInfo.ticketId + '] ' + source.summary,
+      summary: source.summary,
       description: source.description || source.summary,
       priority: source.priorityJira || 'Medium'
     };
