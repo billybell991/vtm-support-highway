@@ -110,6 +110,21 @@ try {
     Copy-Item -Path $src -Destination $stage -Recurse -Force
   }
 
+  # ── Inject secrets into staged settings.js (token never touches git) ────────
+  $secretsFile = Join-Path $PSScriptRoot 'secrets.local.json'
+  $stagedSettings = Join-Path $stage 'settings.js'
+  if ((Test-Path $secretsFile) -and (Test-Path $stagedSettings)) {
+    $secrets = Get-Content -Raw $secretsFile | ConvertFrom-Json
+    if ($secrets.jiraPass) {
+      $settingsText = Get-Content -Raw $stagedSettings
+      $settingsText = $settingsText -replace "jiraPass: '([^']*)',", "jiraPass: '$($secrets.jiraPass)',"
+      Set-Content -Path $stagedSettings -Value $settingsText -Encoding UTF8 -NoNewline
+      Write-Host '  -> injected jiraPass from secrets.local.json into staged settings.js'
+    }
+  } else {
+    Write-Warning 'secrets.local.json not found -- jiraPass will be empty in zip. Run: echo {"jiraPass":"TOKEN"} > secrets.local.json'
+  }
+
   if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir | Out-Null }
   $zipPath = Join-Path $OutDir "vtm-support-highway-v$version.zip"
   # Remove any old versioned zips to avoid accumulation

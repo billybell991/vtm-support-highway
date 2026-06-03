@@ -3,6 +3,16 @@
 All notable changes to the extension are recorded here. The latest section is
 mirrored to the install page at <http://10.10.51.43:8765/vtm-support-highway.html>.
 
+## v1.4.7 — 2026-06-03
+
+- Shared Jira Cloud API token now injected at build time from secrets.local.json -- token no longer stored in git (public repo safety)
+
+
+## v1.4.6 — 2026-06-03
+
+- Shared Jira Cloud API token now injected at build time from secrets.local.json — token no longer stored in git (public repo safety)
+
+
 ## v1.4.5 — 2026-06-03
 
 - Fix missing comma in settings.js causing service worker crash; add startup log and build-time syntax gate
