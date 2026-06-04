@@ -330,11 +330,6 @@ function populatePreview() {
     $('jira-target-fields').style.display = '';
     $('zd-target-fields').style.display = 'none';
 
-    // Auto-prefix summary
-    if (!$('fld-summary').value.startsWith('[ZD-')) {
-      $('fld-summary').value = '[ZD-' + ticketData.id + '] ' + $('fld-summary').value;
-    }
-
     // Map Zendesk priority → Jira priority
     $('fld-priority-jira').value = ticketData.priorityJira || 'Medium';
 
@@ -358,8 +353,9 @@ function populatePreview() {
       $('lbl-severity').style.display   = '';
       $('lbl-components').style.display = '';
       $('lbl-product').style.display    = 'none';
-      $('fld-project').value = ticketData.project || 'CRMS';
-      $('fld-issuetype').dataset.preferredType = 'Support Defect';
+      // Auto-select project based on ZD ticket's VRM/EJU Product field
+      $('fld-project').value = ticketData.product === 'US RMS' ? 'URMS' : 'CRMS';
+      $('fld-issuetype').dataset.preferredType = 'Bug';
 
       // Load components and issue types from Jira Cloud
       updateIssueTypes($('fld-project').value || 'CRMS');
@@ -417,7 +413,7 @@ async function updateIssueTypes(projectKey) {
     // Preferred type from data attribute (set when opened from a ZD button)
     const preferred = sel.dataset.preferredType || prev;
     if (types.some(t => t.name === preferred)) sel.value = preferred;
-    else if (types.some(t => t.name === 'Support Defect')) sel.value = 'Support Defect';
+    else if (types.some(t => t.name === 'Bug')) sel.value = 'Bug';
     else sel.value = types[0].name;
     console.log('[Popup] Issue types for ' + projectKey + ':', types.map(t => t.name));
   } catch (e) {
@@ -470,7 +466,7 @@ function updatePreviewHeading() {
     if (paramTarget === 'jira-onprem') {
       heading.textContent = 'Clone to Tech Request — On-Prem Jira (SUP)';
     } else if (paramTarget === 'jira') {
-      heading.textContent = 'Clone to Support Defect — Jira Cloud (CRMS)';
+      heading.textContent = 'Clone to Bug — Jira Cloud (CRMS)';
     } else {
       heading.textContent = 'Create from Zendesk → Jira Cloud / On-Prem Jira / Aha';
     }
@@ -566,7 +562,7 @@ function wireActionButtons() {
     await fetchAndPreview();
   });
 
-  // Create Jira Cloud (Support Defect)
+  // Create Jira Cloud (Bug)
   $('btn-create-jira').addEventListener('click', () => createTicket('jira'));
 
   // Create On-Prem Jira (Tech Request)

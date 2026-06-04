@@ -241,7 +241,7 @@
     <img class="brand" src="/versaterm-logo.png" alt="Versaterm" onerror="this.style.display='none'" />
     <div>
       <h1>VTM SUPPORT HIGHWAY</h1>
-      <span class="version" id="ver-pill">v1.4.4</span>
+      <span class="version" id="ver-pill">v1.4.12</span>
     </div>
     <p class="sub">A Chrome extension that creates and links tickets across <strong>Zendesk</strong>, <strong>Jira Cloud</strong>, and <strong>On-Prem Jira (SUP)</strong> &mdash; one click from a support ticket to a defect or technical request, fully populated and cross-linked.</p>
     <nav class="topnav">
@@ -262,18 +262,28 @@
     <div class="download-card">
       <div class="left">
         <p class="title">Step 1 &mdash; Download the extension zip</p>
-        <div class="what"><code id="zip-name">vtm-support-highway-v1.4.5.zip</code> <span class="pill navy" id="ver-pill2">v1.4.4</span></div>
+        <div class="what"><code id="zip-name">vtm-support-highway-v1.4.12.zip</code> <span class="pill navy" id="ver-pill2">v1.4.12</span></div>
         <div class="meta">unpacked Chrome extension &middot; works on Windows + Mac + Linux</div>
       </div>
-      <a class="download" href="vtm-support-highway.zip" id="dl-link">Download zip</a>
+      <a class="download" href="vtm-support-highway-v1.4.12.zip" id="dl-link">Download zip</a>
     </div>
 
     <ol class="steps">
       <li><strong>Unzip it</strong> somewhere easy to find (for example: <code>Downloads/vtm-support-highway</code> or <code>Desktop/vtm-support-highway</code>).</li>
       <li><strong>In Chrome:</strong> open <code>chrome://extensions</code>, toggle <strong>Developer mode</strong> ON, click <strong>Load unpacked</strong>, and select the unzipped extension folder.</li>
-      <li><strong>Configure it:</strong> click the toolbar icon, hit the gear, and paste in your Jira Cloud email + API token (and on-prem Jira credentials if you'll be cloning to SUP). Save.</li>
+      <li><strong>Configure it:</strong> click the toolbar icon, hit the gear (&thinsp;&#9881;&thinsp;), and fill in the two required sections:
+        <ul style="margin:6px 0 4px 0; padding-left:1.4em; line-height:1.7">
+          <li><strong>Jira Cloud &rarr; Email:</strong> enter your Versaterm email address (e.g. <code>firstname.lastname@versaterm.com</code>). The API token is pre-configured &mdash; you don't need to change it.</li>
+          <li><strong>On-Prem Jira &rarr; Username &amp; Password / PAT:</strong> enter your <code>atlassian.versaterm.com</code> username and password (or a Personal Access Token if your account uses one). These are needed to clone tickets to <strong>SUP</strong> (Tech Requests).</li>
+        </ul>
+        Click <strong>Save settings</strong> when done. You only need to do this once.
+      </li>
       <li><strong>You're done.</strong> Open any Zendesk ticket on <code>versatermhelp.zendesk.com</code> and you'll see two new buttons: <em>Clone to Support Defect</em> and <em>Clone to Tech Request</em>.</li>
     </ol>
+
+    <div class="callout info" style="margin-bottom:10px">
+      <strong>First install?</strong> The extension ships with the shared Jira Cloud API token pre-filled, but your <strong>email address</strong> and <strong>on-prem Jira credentials</strong> are personal &mdash; you must enter them in Settings before the buttons will work. Takes about 30 seconds.
+    </div>
 
     <div class="callout info">
       <strong>Updating later:</strong> re-download the zip, unzip over the same folder (overwrite all), then go to <code>chrome://extensions</code> and click the &#x21BB; reload arrow on the VTM Support Highway card. Confirm the version number bumps.
@@ -351,7 +361,9 @@
     <h2>Changelog</h2>
     <p class="lede">Each release is also recorded in <code>CHANGELOG.md</code> in the source repo.</p>
     <!-- CHANGELOG:START -->
-<article class="release"><h3>v1.4.4 <span class="date">— 2026-06-02</span></h3><ul><li>Remove ZD prefix from Jira ticket title when cloning from Zendesk</li></ul></article>
+<article class="release"><h3>v1.4.12 <span class="date">— 2026-06-04</span></h3><ul><li>Add URMS (US RMS) to Project Key dropdown; auto-default Project Key to URMS when ZD VRM/EJU Product field is US RMS (uses hardcoded field ID 46648241536531 — same direct-lookup pattern as Sherlock)</li></ul></article>
+<article class="release"><h3>v1.4.11 <span class="date">— 2026-06-03</span></h3><ul><li>_Release notes pending._</li></ul></article>
+<article class="release"><h3>v1.4.10 <span class="date">— 2026-06-03</span></h3><ul><li>Fix JQL illegal escape: remove backslashes from bracket escaping in v3 search/jql</li></ul></article>
 <!-- CHANGELOG:END -->
   </div>
 </section>
@@ -384,7 +396,7 @@
 </section>
 
 <footer>
-  <p>VTM Support Highway &middot; <span id="ver-pill3">v1.4.4</span> &middot; Versaterm Public Safety</p>
+  <p>VTM Support Highway &middot; <span id="ver-pill3">v1.4.12</span> &middot; Versaterm Public Safety</p>
 </footer>
 
 </body>

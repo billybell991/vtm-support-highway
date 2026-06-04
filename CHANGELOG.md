@@ -3,6 +3,15 @@
 All notable changes to the extension are recorded here. The latest section is
 mirrored to the install page at <http://10.10.51.43:8765/vtm-support-highway.html>.
 
+## v1.4.12 — 2026-06-04
+
+- Add URMS (US RMS) to Project Key dropdown; auto-default Project Key to URMS when ZD VRM/EJU Product field is US RMS (uses hardcoded field ID 46648241536531 — same direct-lookup pattern as Sherlock)
+
+
+## v1.4.11 — 2026-06-03
+
+- _Release notes pending._
+
 ## v1.4.10 — 2026-06-03
 
 - Fix JQL illegal escape: remove backslashes from bracket escaping in v3 search/jql

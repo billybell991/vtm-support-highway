@@ -560,24 +560,19 @@ const API = (() => {
     return {};
   }
 
-  /** Cache of ZD ticket field info (fetched once per session) */
-  let _zdFieldCache = null;
-  async function getZdProductFieldInfo(cfg) {
-    if (_zdFieldCache !== null) return _zdFieldCache;
-    _zdFieldCache = { productId: null, options: {} };
-    try {
-      const data = await zdGet(cfg, '/api/v2/ticket_fields.json');
-      const fields = data.ticket_fields || [];
-      const productField = fields.find(f => f.title && f.title.toLowerCase().includes('product'));
-      if (productField) {
-        _zdFieldCache.productId = productField.id;
-        for (const opt of (productField.custom_field_options || [])) {
-          _zdFieldCache.options[opt.value] = opt.name;
-        }
-      }
-    } catch (e) { /* optional */ }
-    return _zdFieldCache;
-  }
+  /** Hardcoded VRM/EJU Product field ID (id=46648241536531) and value->name map.
+   *  Using the same direct-lookup approach as Sherlock's scope-filter.js —
+   *  no extra ticket_fields.json API call needed. */
+  const _VRM_PRODUCT_FIELD_ID = 46648241536531;
+  const _VRM_PRODUCT_NAMES = {
+    'vrm_product_us_rms':  'US RMS',
+    'vrm_product_can_rms': 'CAN RMS',
+    'vrm_product_ejust':   'eJust',
+    'vrm_product_us_mre':  'US MRE',
+    'vrm_product_can_mre': 'CAN MRE',
+    'vrm_product_vdm':     'VDM',
+    'vrm_product_other':   'Other'
+  };
 
   /** Fetch a Zendesk ticket by ID (enriched with requester + org) */
   async function fetchZdTicket(cfg, ticketId) {
@@ -601,15 +596,9 @@ const API = (() => {
       } catch (e) { /* requester fetch optional */ }
     }
 
-    // Extract Product from ZD custom fields
-    let product = '';
-    try {
-      const pInfo = await getZdProductFieldInfo(cfg);
-      if (pInfo.productId) {
-        const cf = (t.custom_fields || []).find(f => f.id === pInfo.productId);
-        if (cf && cf.value) product = pInfo.options[cf.value] || cf.value;
-      }
-    } catch (e) { /* optional */ }
+    // Extract VRM/EJU Product directly by hardcoded field ID (Sherlock pattern — no extra API call)
+    const _productCf = (t.custom_fields || []).find(f => Number(f.id) === _VRM_PRODUCT_FIELD_ID);
+    const product = (_productCf && _productCf.value && _VRM_PRODUCT_NAMES[_productCf.value]) || '';
 
     return {
       source: 'zendesk',
