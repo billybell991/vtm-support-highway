@@ -1,6 +1,6 @@
 /**
  * content-zendesk.js — Injected into Zendesk Agent ticket pages.
- * Adds "Clone to Support Defect" and "Clone to Tech Request" buttons on ticket views.
+ * Adds "Clone to Support Bug" and "Clone to Tech Request" buttons on ticket views.
  */
 (function () {
   'use strict';
@@ -62,7 +62,7 @@
     btnDefect.id = 'vtm-clone-to-jira';
     btnDefect.className = 'vtm-zd-clone-btn vtm-btn-defect';
     btnDefect.title = 'Clone to Jira Cloud CRMS — Support Defect';
-    btnDefect.innerHTML = '<span class="vtm-icon">⇄</span> Clone to Support Defect';
+    btnDefect.innerHTML = '<span class="vtm-icon">⇄</span> Clone to Support Bug';
     btnDefect.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); startClone('jira'); });
 
     const btnTech = document.createElement('button');
