@@ -97,8 +97,8 @@ const API = (() => {
   function clearZdCsrfCache() { _zdCsrfToken = null; }
 
   // Priority maps (from AION codebase)
-  const ZD_TO_JIRA_PRIORITY = { urgent: 'Critical', high: 'High', normal: 'Medium', low: 'Low' };
-  const JIRA_TO_ZD_PRIORITY = { Blocker: 'urgent', Critical: 'urgent', Highest: 'urgent', High: 'high', Medium: 'normal', Low: 'low', Lowest: 'low' };
+  const ZD_TO_JIRA_PRIORITY = { urgent: 'P1', high: 'P2', normal: 'P3', low: 'P4' };
+  const JIRA_TO_ZD_PRIORITY = { P1: 'urgent', P2: 'high', P3: 'normal', P4: 'low', P5: 'low', Blocker: 'urgent', Critical: 'urgent', Highest: 'urgent', High: 'high', Medium: 'normal', Low: 'low', Lowest: 'low' };
 
   /**
    * Resolve a requested Jira priority name against the project's actual allowed
@@ -216,7 +216,7 @@ const API = (() => {
       contact: contactVal,
       severity: (f.customfield_10505 && f.customfield_10505.value) || 'Normal',
       component: (f.customfield_10809 && f.customfield_10809.value) || '',
-      priority: (f.priority && f.priority.name) || 'Medium',
+      priority: (f.priority && f.priority.name) || 'P3',
       priorityZd: JIRA_TO_ZD_PRIORITY[(f.priority && f.priority.name)] || 'normal',
       issueType: (f.issuetype && f.issuetype.name) || 'Support Defect',
       status: (f.status && f.status.name) || '',
@@ -292,6 +292,16 @@ const API = (() => {
       if (!hit) hit = allowed.find(a => lower.includes(a.value.toLowerCase()) && a.value.length > 3);
       // 3. Allowed value contains the input
       if (!hit) hit = allowed.find(a => a.value.toLowerCase().includes(lower) && lower.length > 3);
+      // 4. Token-based match: handles Zendesk org names vs Jira short codes
+      if (!hit) {
+        const tokenize = s => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(t => t.length > 0);
+        const inTokens = tokenize(input);
+        hit = allowed.find(a => {
+          const candTokens = tokenize(a.value);
+          if (!candTokens.length) return false;
+          return candTokens.every(ct => inTokens.some(it => it === ct || it.startsWith(ct) || ct.startsWith(it)));
+        });
+      }
       if (hit) return hit.value;
       console.warn('[API] No allowed match for', fieldId, '=', JSON.stringify(input), '— skipping field');
       return null;
@@ -607,7 +617,7 @@ const API = (() => {
       summary: t.subject || '',
       description: t.description || '',
       priority: t.priority || 'normal',
-      priorityJira: ZD_TO_JIRA_PRIORITY[t.priority] || 'Medium',
+      priorityJira: ZD_TO_JIRA_PRIORITY[t.priority] || 'P3',
       status: t.status || '',
       tags: (t.tags || []).join(', '),
       requester_id: t.requester_id,

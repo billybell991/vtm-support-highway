@@ -1,4 +1,4 @@
-# build-zip.ps1
+﻿# build-zip.ps1
 # Packages the VTM Support Highway extension into vtm-support-highway.zip
 # alongside the landing page in web\. Optionally deploys both to the Sherlock
 # install host (10.10.51.43:8765) with -Deploy.
@@ -18,7 +18,7 @@ Set-Location $PSScriptRoot
 $manifestPath = Join-Path $PSScriptRoot 'manifest.json'
 $changelogPath = Join-Path $PSScriptRoot 'CHANGELOG.md'
 
-# ── Optional version bump (manifest + CHANGELOG) ───────────────────────────────
+# â”€â”€ Optional version bump (manifest + CHANGELOG) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if ($Bump -ne 'none') {
   $manifest = Get-Content -Raw -Path $manifestPath | ConvertFrom-Json
   $parts = $manifest.version -split '\.'
@@ -81,7 +81,7 @@ $include = @(
   'icons'
 )
 
-# ── Syntax gate: node --check every JS file before packaging ─────────────────────
+# â”€â”€ Syntax gate: node --check every JS file before packaging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $jsFiles = $include | Where-Object { $_ -like '*.js' } | ForEach-Object { Join-Path $PSScriptRoot $_ }
 $syntaxErrors = @()
 foreach ($jsFile in $jsFiles) {
@@ -110,7 +110,7 @@ try {
     Copy-Item -Path $src -Destination $stage -Recurse -Force
   }
 
-  # ── Inject secrets into staged settings.js (token never touches git) ────────
+  # â”€â”€ Inject secrets into staged settings.js (token never touches git) â”€â”€â”€â”€â”€â”€â”€â”€
   $secretsFile = Join-Path $PSScriptRoot 'secrets.local.json'
   $stagedSettings = Join-Path $stage 'settings.js'
   if ((Test-Path $secretsFile) -and (Test-Path $stagedSettings)) {
@@ -200,17 +200,21 @@ if (Test-Path $indexPath) {
 
 Write-Host ""
 Write-Host "Deploy URLs (once published):"
-Write-Host "  http://10.10.51.43:8765/vtm-support-highway.html"
-Write-Host "  http://10.10.51.43:8765/vtm-support-highway.zip"
+Write-Host "  http://10.10.51.43/highway/"
+Write-Host "  http://10.10.51.43/highway/vtm-support-highway.zip"
 
 if ($Deploy) {
   Write-Host ""
-  Write-Host "Deploying to vdxiii@10.10.51.43 ..."
-  $stage = '/Users/vdxiii/vtm-stage/'
-  & scp -o BatchMode=yes (Join-Path $OutDir 'index.html') (Join-Path $OutDir 'vtm-support-highway.zip') "vdxiii@10.10.51.43:$stage"
-  if ($LASTEXITCODE -ne 0) { throw "scp failed (exit $LASTEXITCODE)" }
-  $cmd = 'wsl -e bash -c "cp /mnt/c/Users/vdxiii/vtm-stage/index.html /home/vdxiii/dev/sherlock-tool/scripts/vtm-support-highway.html && cp /mnt/c/Users/vdxiii/vtm-stage/vtm-support-highway.zip /home/vdxiii/dev/sherlock-tool/scripts/vtm-support-highway.zip && ls -la /home/vdxiii/dev/sherlock-tool/scripts/vtm-support-highway*"'
-  $cmd | & ssh -o BatchMode=yes vdxiii@10.10.51.43 'powershell -NoProfile -Command -'
-  if ($LASTEXITCODE -ne 0) { throw "remote copy failed (exit $LASTEXITCODE)" }
+  Write-Host "Deploying to IIS (C:\inetpub\wwwroot\highway\) ..."
+  $iisHighway = 'C:\inetpub\wwwroot\highway'
+  Copy-Item (Join-Path $OutDir 'index.html') (Join-Path $iisHighway 'index.html') -Force
+  $zipSrc = Join-Path $OutDir "vtm-support-highway-v$version.zip"
+  Copy-Item $zipSrc (Join-Path $iisHighway "vtm-support-highway-v$version.zip") -Force
+  Copy-Item $zipSrc (Join-Path $iisHighway 'vtm-support-highway.zip') -Force
+  # Remove old versioned zips
+  Get-ChildItem $iisHighway -Filter 'vtm-support-highway-v*.zip' -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "vtm-support-highway-v$version.zip" } |
+    ForEach-Object { Remove-Item $_.FullName -Force; Write-Host "  -> removed old zip: $($_.Name)" }
+  Write-Host "  -> deployed to $iisHighway"
   Write-Host "Deployed."
 }

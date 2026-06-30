@@ -1,4 +1,4 @@
-# deploy-hub.ps1 — push hub/index.html to the install server as the root landing page.
+﻿# deploy-hub.ps1 â€” push hub/index.html to the install server as the root landing page.
 #
 # Routing today:
 #   /                     -> hub landing page (this file)
@@ -54,6 +54,6 @@ ssh $RemoteHost "wsl ls -la $WslDest/index.html $WslDest/sherlock.html $WslDest/
 
 Write-Host ""
 Write-Host "Deployed." -ForegroundColor Green
-Write-Host "  http://10.10.51.43:8765/                          -> hub"
-Write-Host "  http://10.10.51.43:8765/sherlock.html             -> SHERLOCK"
-Write-Host "  http://10.10.51.43:8765/vtm-support-highway.html  -> Highway"
+Write-Host "  http://10.10.51.43/         -> hub"
+Write-Host "  http://10.10.51.43/sherlock/             -> SHERLOCK"
+Write-Host "  http://10.10.51.43/highway/  -> Highway"
