@@ -7,6 +7,98 @@
  */
 
 const API = (() => {
+  // ────── Confirmed client mapping (Zendesk org name → exact Jira field values) ──────
+  // crms  = Jira Cloud Canadian picklist value (customfield_10844)
+  // onprem = SUP labels field value (customfield_10000)
+  // Source of truth: client-map.json. US RMS / URMS Jira Cloud intentionally skipped.
+  const CLIENT_MAP = {
+    // Canada (CRMS picklist == on-prem label)
+    'department of national defence (on)': { crms: 'DND', onprem: 'DND' },
+    'durham regional police service (on)': { crms: 'Durham', onprem: 'Durham' },
+    'province of saskatchewan (sk)': { crms: 'GovSask', onprem: 'GovSask' },
+    'ottawa police service (on)': { crms: 'Ottawa_Police', onprem: 'Ottawa_Police' },
+    'rcmp_pip': { crms: 'RCMP_PIP', onprem: 'RCMP_PIP' },
+    'royal newfoundland constabulary (rnc)': { crms: 'RNC', onprem: 'RNC' },
+    'statcan': { crms: 'StatCan', onprem: 'StatCan' },
+    'fredericton police force (nb)': { crms: 'Fredericton', onprem: 'Fredericton' },
+    'gatineau police service (qc)': { crms: 'Gatineau', onprem: 'Gatineau' },
+    'halifax regional police (ns)': { crms: 'Halifax', onprem: 'Halifax' },
+    'kingston police service (on)': { crms: 'Kingston', onprem: 'Kingston' },
+    'london police service (on)': { crms: 'London', onprem: 'London' },
+    'medicine hat police service (ab)': { crms: 'MedicineHat', onprem: 'MedicineHat' },
+    'niagara regional police service (on)': { crms: 'Niagara', onprem: 'Niagara' },
+    'service new brunswick - pors (nb)': { crms: 'PORS', onprem: 'PORS' },
+    'primecorp (bc)': { crms: 'PRIME_BC', onprem: 'PRIME_BC' },
+    'prince albert police service (sk)': { crms: 'PrinceAlbert', onprem: 'PrinceAlbert' },
+    'saint john police force (nb)': { crms: 'SaintJohn', onprem: 'SaintJohn' },
+    'saskatoon police service (sk)': { crms: 'Saskatoon', onprem: 'Saskatoon' },
+    'service de police ville de sherbrooke (qc)': { crms: 'Sherbrooke', onprem: 'Sherbrooke' },
+    'toronto police service (on)': { crms: 'Toronto', onprem: 'Toronto' },
+    'trinidad & tobago police service (tt)': { crms: 'Trinidad', onprem: 'Trinidad' },
+    'versaterm': { crms: 'Versaterm', onprem: 'Versaterm' },
+    'western university (on)': { crms: 'Western_University', onprem: 'Western_University' },
+    'windsor police service (on)': { crms: 'Windsor', onprem: 'Windsor' },
+    'york regional police (on)': { crms: 'York', onprem: 'York' },
+    // US (on-prem SUP label only; no CRMS picklist value)
+    'anaheim police department (ca)': { crms: null, onprem: 'Anaheim' },
+    'baytown police department (tx)': { crms: null, onprem: 'Baytown' },
+    'beaverton police department (or)': { crms: null, onprem: 'Beaverton' },
+    'bellingham police department (wa)': { crms: null, onprem: 'Bellingham' },
+    'bucks county 9-1-1 emergency response (pa)': { crms: null, onprem: 'Bucks_County' },
+    'city of burbank (ca)': { crms: null, onprem: 'Burbank' },
+    'fullerton police department (ca)': { crms: null, onprem: 'Fullerton' },
+    'gresham police department (or)': { crms: null, onprem: 'Gresham' },
+    'hillsboro police department (or)': { crms: null, onprem: 'Hillsboro' },
+    "hillsborough county sheriff's office (fl)": { crms: null, onprem: 'Hillsborough' },
+    'inglewood police department (ca)': { crms: null, onprem: 'Inglewood' },
+    'minneapolis police department (mn)': { crms: null, onprem: 'Minneapolis' },
+    "multnomah county sheriff's office (or)": { crms: null, onprem: 'Multnomah_County' },
+    'portland bureau of emergency communications/boec (or)': { crms: null, onprem: 'Portland_BOEC' },
+    'salt lake valley consortium (ut)': { crms: null, onprem: 'Salt_Lake_Valley' },
+    'san jose police department (ca)': { crms: null, onprem: 'San_Jose' },
+    'santa monica police department (ca)': { crms: null, onprem: 'Santa_Monica' },
+    'simi valley police department (ca)': { crms: null, onprem: 'Simi_Valley' },
+    'taylorsville police department (ut)': { crms: null, onprem: 'Taylorsville' },
+    'torrance police department (ca)': { crms: null, onprem: 'Torrance' },
+    'walnut creek police department (ca)': { crms: null, onprem: 'Walnut_Creek' },
+    'aurora police department (co)': { crms: null, onprem: 'Aurora' },
+    'austin police department (tx)': { crms: null, onprem: 'Austin' },
+    'bakersfield police department (ca)': { crms: null, onprem: 'Bakersfield' },
+    'brea police department (ca)': { crms: null, onprem: 'Brea' },
+    'chandler police department (az)': { crms: null, onprem: 'Chandler' },
+    'daytona beach police (fl)': { crms: null, onprem: 'Daytona' },
+    'denver police department (co)': { crms: null, onprem: 'Denver' },
+    'gilbert police department (az)': { crms: null, onprem: 'Gilbert' },
+    'houston police department (tx)': { crms: null, onprem: 'Houston' },
+    'lenexa police department (ks)': { crms: null, onprem: 'Lenexa' },
+    'mesa police department (az)': { crms: null, onprem: 'Mesa' },
+    'pasadena police department (ca)': { crms: null, onprem: 'Pasadena' },
+    'philadelphia police department (pa)': { crms: null, onprem: 'Philadelphia' },
+    'phoenix police department (az)': { crms: null, onprem: 'Phoenix' },
+    'portland police bureau (or)': { crms: null, onprem: 'Portland' },
+    'sacramento city police department (ca)': { crms: null, onprem: 'Sacramento_City' },
+    "sacramento county sheriff's office (ca)": { crms: null, onprem: 'Sacramento_County' },
+    "san mateo county sheriff's office (ca)": { crms: null, onprem: 'San_Mateo' },
+    'santa barbara police department (ca)': { crms: null, onprem: 'Santa_Barbara' },
+    'seattle police department (wa)': { crms: null, onprem: 'Seattle' },
+    'salt lake city police (ut)': { crms: null, onprem: 'SLC' },
+    'tampa police department (fl)': { crms: null, onprem: 'Tampa' },
+    'tempe police department (az)': { crms: null, onprem: 'Tempe' },
+    'valley communications center (wa)': { crms: null, onprem: 'ValleyComm' },
+    'ventura police department (ca)': { crms: null, onprem: 'Ventura_city' },
+    "ventura county sheriff's office (ca)": { crms: null, onprem: 'Ventura_County' }
+  };
+
+  /** Resolve a Zendesk org name to the exact Jira field value for the given target
+   *  ('crms' for Jira Cloud picklist, 'onprem' for SUP label). Returns null when the
+   *  org isn't in the confirmed map (caller falls back to fuzzy matching). */
+  function resolveClient(rawClient, target) {
+    if (!rawClient) return null;
+    const entry = CLIENT_MAP[String(rawClient).toLowerCase().trim()];
+    if (!entry) return null;
+    return entry[target] || null;
+  }
+
   // ────── Helpers ──────
   function jiraHeaders(cfg) {
     const headers = { 'Accept': 'application/json' };
@@ -365,7 +457,15 @@ const API = (() => {
     // Client (Cloud: customfield_10844 option array, On-Prem: customfield_10000)
     if (fields.client) {
       const fid = findByName('client') || (onScreen('customfield_10844') ? 'customfield_10844' : null);
-      if (fid) setOptionField(fid, fields.client);
+      if (fid) {
+        // On-prem SUP uses a labels field (customfield_10000); Jira Cloud uses the picklist.
+        const isOnPrem = fid === 'customfield_10000' ||
+          fields.project === (cfg.onPremJiraTechProject || 'SUP') ||
+          !((meta[fid] && meta[fid].allowedValues && meta[fid].allowedValues.length));
+        const mapped = resolveClient(fields.client, isOnPrem ? 'onprem' : 'crms');
+        if (mapped) console.log('[API] Client mapped', JSON.stringify(fields.client), '→', JSON.stringify(mapped), '(' + (isOnPrem ? 'onprem' : 'crms') + ')');
+        setOptionField(fid, mapped || fields.client);
+      }
     }
     // Contact (Cloud: customfield_10845 option array)
     if (fields.contact) {

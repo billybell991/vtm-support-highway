@@ -1,10 +1,10 @@
 /* ===== BASE ===== */
 /* Chrome caps extension popups at ~600px tall. Lock to that so flex children
    (settings panel, body) can divide the space correctly and pin their footers. */
-html { width: 520px; height: 600px; overflow: hidden; }
+html { width: 780px; height: 675px; overflow: hidden; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  width: 520px; height: 600px;
+  width: 780px; height: 675px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px; color: #212529; background: #fff;
   display: flex; flex-direction: column; overflow: hidden;

@@ -70,8 +70,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     chrome.windows.create({
       url: chrome.runtime.getURL('popup.html?' + params.toString()),
       type: 'popup',
-      width: 560,
-      height: 660,
+      width: 840,
+      height: 743,
       focused: true
     });
     sendResponse({ ok: true });

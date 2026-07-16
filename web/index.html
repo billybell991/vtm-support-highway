@@ -241,7 +241,7 @@
     <img class="brand" src="/versaterm-logo.png" alt="Versaterm" onerror="this.style.display='none'" />
     <div>
       <h1>VTM SUPPORT HIGHWAY</h1>
-      <span class="version" id="ver-pill">v1.4.15</span>
+      <span class="version" id="ver-pill">v1.4.16</span>
     </div>
     <p class="sub">A Chrome extension that creates and links tickets across <strong>Zendesk</strong>, <strong>Jira Cloud</strong>, and <strong>On-Prem Jira (SUP)</strong> &mdash; one click from a support ticket to a defect or technical request, fully populated and cross-linked.</p>
     <nav class="topnav">
@@ -262,10 +262,10 @@
     <div class="download-card">
       <div class="left">
         <p class="title">Step 1 &mdash; Download the extension zip</p>
-        <div class="what"><code id="zip-name">vtm-support-highway-v1.4.15.zip</code> <span class="pill navy" id="ver-pill2">v1.4.15</span></div>
+        <div class="what"><code id="zip-name">vtm-support-highway-v1.4.16.zip</code> <span class="pill navy" id="ver-pill2">v1.4.16</span></div>
         <div class="meta">unpacked Chrome extension &middot; works on Windows + Mac + Linux</div>
       </div>
-      <a class="download" href="vtm-support-highway-v1.4.15.zip" id="dl-link">Download zip</a>
+      <a class="download" href="vtm-support-highway-v1.4.16.zip" id="dl-link">Download zip</a>
     </div>
 
     <ol class="steps">
@@ -361,9 +361,11 @@
     <h2>Changelog</h2>
     <p class="lede">Each release is also recorded in <code>CHANGELOG.md</code> in the source repo.</p>
     <!-- CHANGELOG:START -->
+<article class="release"><h3>v1.4.16 <span class="date">— 2026-06-30</span></h3><ul><li>Fixed client mapping: Zendesk org names now resolve to the exact Jira Client value via a confirmed lookup table (CRMS picklist codes and on-prem SUP labels), instead of fuzzy word-matching that produced junk labels.</li>
+<li>Bigger popup window and larger Original Submittal / Description fields.</li>
+<li>Removed the redundant helper text under the Description label.</li></ul></article>
 <article class="release"><h3>v1.4.15 <span class="date">— 2026-06-05</span></h3><ul><li>Fix client field mapping: add token-based fuzzy match so Zendesk org names like PrimeCorp map to Jira short codes like PRIME_BC</li></ul></article>
 <article class="release"><h3>v1.4.14 <span class="date">— 2026-06-05</span></h3><ul><li>Fix client field mapping: add token-based fuzzy match so Zendesk org names like 'PrimeCorp (BC)' correctly map to Jira short codes like 'PRIME_BC'</li></ul></article>
-<article class="release"><h3>v1.4.12 <span class="date">— 2026-06-04</span></h3><ul><li>Add URMS (US RMS) to Project Key dropdown; auto-default Project Key to URMS when ZD VRM/EJU Product field is US RMS (uses hardcoded field ID 46648241536531 — same direct-lookup pattern as Sherlock)</li></ul></article>
 <!-- CHANGELOG:END -->
   </div>
 </section>
@@ -396,7 +398,7 @@
 </section>
 
 <footer>
-  <p>VTM Support Highway &middot; <span id="ver-pill3">v1.4.15</span> &middot; Versaterm Public Safety</p>
+  <p>VTM Support Highway &middot; <span id="ver-pill3">v1.4.16</span> &middot; Versaterm Public Safety</p>
 </footer>
 
 </body>

@@ -3,6 +3,13 @@
 All notable changes to the extension are recorded here. The latest section is
 mirrored to the install page at <http://10.10.51.43/highway/>.
 
+## v1.4.16 — 2026-06-30
+
+- Fixed client mapping: Zendesk org names now resolve to the exact Jira Client value via a confirmed lookup table (CRMS picklist codes and on-prem SUP labels), instead of fuzzy word-matching that produced junk labels.
+- Bigger popup window and larger Original Submittal / Description fields.
+- Removed the redundant helper text under the Description label.
+
+
 ## v1.4.15 — 2026-06-05
 
 - Fix client field mapping: add token-based fuzzy match so Zendesk org names like PrimeCorp map to Jira short codes like PRIME_BC
