@@ -689,21 +689,24 @@ const API = (() => {
     const data = await zdGet(cfg, '/api/v2/tickets/' + encodeURIComponent(ticketId) + '.json');
     const t = data.ticket || {};
 
-    // Fetch requester details (name + email for Contact field)
+    // Fetch requester details (name + email for Contact field).
+    // The ticket organization is authoritative; requester organization is a fallback.
     let requesterName = '', requesterEmail = '', orgName = '';
+    let organizationId = t.organization_id;
     if (t.requester_id) {
       try {
         const uData = await zdGet(cfg, '/api/v2/users/' + t.requester_id + '.json');
         const u = uData.user || {};
         requesterName = u.name || '';
         requesterEmail = u.email || '';
-        if (u.organization_id) {
-          try {
-            const oData = await zdGet(cfg, '/api/v2/organizations/' + u.organization_id + '.json');
-            orgName = (oData.organization && oData.organization.name) || '';
-          } catch (e) { /* org fetch optional */ }
-        }
+        if (!organizationId) organizationId = u.organization_id;
       } catch (e) { /* requester fetch optional */ }
+    }
+    if (organizationId) {
+      try {
+        const oData = await zdGet(cfg, '/api/v2/organizations/' + organizationId + '.json');
+        orgName = (oData.organization && oData.organization.name) || '';
+      } catch (e) { /* org fetch optional */ }
     }
 
     // Extract VRM/EJU Product directly by hardcoded field ID (Sherlock pattern — no extra API call)
